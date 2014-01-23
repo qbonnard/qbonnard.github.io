@@ -1,0 +1,1589 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+
+  <title><![CDATA[Quentin Bonnard]]></title>
+  <link href="https://quentin.bonnard.eu/atom.xml" rel="self"/>
+  <link href="https://quentin.bonnard.eu/"/>
+  <updated>2014-01-23T15:07:52+01:00</updated>
+  <id>https://quentin.bonnard.eu/</id>
+  <author>
+    <name><![CDATA[Quentin Bonnard]]></name>
+    
+  </author>
+  <generator uri="http://octopress.org/">Octopress</generator>
+
+  
+  <entry>
+    <title type="html"><![CDATA[Using OpenCV's test framework (with CMake)]]></title>
+    <link href="https://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/"/>
+    <updated>2013-10-16T00:00:00+02:00</updated>
+    <id>https://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake</id>
+    <content type="html"><![CDATA[<p>This post explains how to set up tests making use of OpenCV&rsquo;s built in framework.</p>
+
+<h1>Introduction</h1>
+
+<p>Promoting Chilitags, our C++ <a href="http://chili.epfl.ch/software">library for detecting fiducial markers</a>, from &ldquo;research code&rdquo; to published code means that we have no excuse any more for not having any test at all.
+After a short comparisons for testing frameworks, it seemed that Google Test would best fit our need.</p>
+
+<p>Chilitags is heavily based on OpenCV. It turns out that OpenCV already integrates Google Test, and adds their own features, so you don&rsquo;t have to write a function to assert that two matrices are equal for example. I&rsquo;m more and more conviced that &ldquo;OpenCV&rdquo; means &ldquo;we already did everything you may and will need&rdquo; in some secret language.</p>
+
+<p>However, I failed to find documentation on OpenCV&rsquo;s <a href="https://github.com/Itseez/opencv/tree/master/modules/ts"><code>ts</code> module</a>, even though they use it to test all the other modules. It is not listed in <a href="http://docs.opencv.org/">OpenCV&rsquo;s documentation</a>, and Google didn&rsquo;t help either. I asked on StackOverflow <a href="http://stackoverflow.com/questions/19405601/how-do-i-use-opencvs-test-framework-with-cmake">how to use OpenCV&rsquo;s test framework with CMake</a>, but haven&rsquo;t received an answer. This post aims at answering myself the question with what I found.</p>
+
+<p>First, I&rsquo;ll show how to configure CMake to compile an OpenCV&rsquo;s executable, and then explain how to run several of them as part of CMake&rsquo;s tests.</p>
+
+<h1>Compiling an OpenCV test executable</h1>
+
+<p>This section gives a minimal example of an OpenCV based library being tested by the OpenCV test framework. We give the code of a dummy library, short test codes, and the CMake set up to build them all.</p>
+
+<h2>The code to be tested</h2>
+
+<p>Let&rsquo;s say we want to test a dummy library, whose interface is declared in <code>mylib.hpp</code>:</p>
+
+<figure class='code'><figcaption><span> (mylib.hpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/include/mylib.hpp'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#ifndef mylib_hpp</span>
+</span><span class='line'><span class="cp">#define mylib_hpp</span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#include &lt;opencv2/core/core.hpp&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">namespace</span> <span class="n">mylib</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">myfunction</span> <span class="p">(</span><span class="n">cv</span><span class="o">::</span><span class="n">InputOutputArray</span> <span class="n">myparam</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#endif</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>and implemented in <code>mylib.cpp</code>:</p>
+
+<figure class='code'><figcaption><span> (mylib.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/src/mylib.cpp'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#include &lt;mylib.hpp&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">void</span> <span class="n">mylib</span><span class="o">::</span><span class="n">myfunction</span> <span class="p">(</span><span class="n">cv</span><span class="o">::</span><span class="n">InputOutputArray</span> <span class="n">myparam</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">myparam</span><span class="p">.</span><span class="n">getMat</span><span class="p">()</span> <span class="o">=</span> <span class="n">cv</span><span class="o">::</span><span class="n">Scalar</span><span class="o">::</span><span class="n">all</span><span class="p">(</span><span class="mi">0</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Right&hellip; Obviously, this library is not the focus of this article.</p>
+
+<h2>The test code</h2>
+
+<p>We first write a simple test case in <code>mytest.cpp</code>:</p>
+
+<figure class='code'><figcaption><span> (mytest.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/mytest.cpp'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#include &lt;opencv2/ts/ts.hpp&gt;</span>
+</span><span class='line'><span class="cp">#include &lt;mylib.hpp&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">class</span> <span class="nc">MyTestClass</span> <span class="o">:</span> <span class="k">public</span> <span class="n">cvtest</span><span class="o">::</span><span class="n">BaseTest</span>
+</span><span class='line'><span class="p">{</span>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>    <span class="n">MyTestClass</span><span class="p">()</span><span class="o">:</span> <span class="n">mat</span><span class="p">(</span><span class="n">cv</span><span class="o">::</span><span class="n">Scalar</span><span class="o">::</span><span class="n">all</span><span class="p">(</span><span class="mi">1</span><span class="p">)){}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">protected</span><span class="o">:</span>
+</span><span class='line'>    <span class="n">cv</span><span class="o">::</span><span class="n">Mat</span> <span class="n">mat</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="kt">void</span> <span class="n">run</span><span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">ts</span><span class="o">-&gt;</span><span class="n">set_failed_test_info</span><span class="p">(</span><span class="n">cvtest</span><span class="o">::</span><span class="n">TS</span><span class="o">::</span><span class="n">OK</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1">//check that all values are between 1 and 1 (and not Nan)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">!=</span> <span class="n">cvtest</span><span class="o">::</span><span class="n">check</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="p">)</span>
+</span><span class='line'>          <span class="n">ts</span><span class="o">-&gt;</span><span class="n">set_failed_test_info</span><span class="p">(</span><span class="n">cvtest</span><span class="o">::</span><span class="n">TS</span><span class="o">::</span><span class="n">FAIL_INVALID_TEST_DATA</span><span class="p">);</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="n">mylib</span><span class="o">::</span><span class="n">myfunction</span><span class="p">(</span><span class="n">mat</span><span class="p">);</span>
+</span><span class='line'>      
+</span><span class='line'>      <span class="c1">//check that all values are between 0 and 0 (and not Nan)</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">!=</span> <span class="n">cvtest</span><span class="o">::</span><span class="n">check</span><span class="p">(</span><span class="n">mat</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="p">)</span>
+</span><span class='line'>          <span class="n">ts</span><span class="o">-&gt;</span><span class="n">set_failed_test_info</span><span class="p">(</span><span class="n">cvtest</span><span class="o">::</span><span class="n">TS</span><span class="o">::</span><span class="n">FAIL_INVALID_OUTPUT</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">TEST</span><span class="p">(</span><span class="n">MyTestSuite</span><span class="p">,</span> <span class="n">ATestThatPasses</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">MyTestClass</span> <span class="n">myTestClass</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">myTestClass</span><span class="p">.</span><span class="n">safe_run</span><span class="p">();</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">TEST</span><span class="p">(</span><span class="n">MyTestSuite</span><span class="p">,</span> <span class="n">ATestThatFails</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="kt">bool</span> <span class="n">mybool</span> <span class="o">=</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">ASSERT_TRUE</span><span class="p">(</span><span class="n">mybool</span><span class="p">);</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This test cases will be automagically run in a specified folder if they are compiled with such <code>test_main.cpp</code>:</p>
+
+<figure class='code'><figcaption><span> (test_main.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/test_main.cpp'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#include &lt;opencv2/ts/ts.hpp&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="n">CV_TEST_MAIN</span><span class="p">(</span><span class="s">&quot;.&quot;</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>That&rsquo;s it!</p>
+
+<h2>Structure and CMake Files</h2>
+
+<p>All these files will be structured typically as follow:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>mylib/
+</span><span class='line'>  CMakeLists.txt
+</span><span class='line'>  lib/
+</span><span class='line'>      CMakeLists.txt
+</span><span class='line'>      include/
+</span><span class='line'>          mylib.hpp
+</span><span class='line'>      src/
+</span><span class='line'>          mylib.cpp
+</span><span class='line'>  test/
+</span><span class='line'>      CMakeLists.txt
+</span><span class='line'>      mytest.cpp
+</span><span class='line'>      test_main.cpp</span></code></pre></td></tr></table></div></figure>
+
+
+<p>The general CMakeLists is standard&hellip;</p>
+
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/CMakeLists.txt'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='cmake'><span class='line'><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">2.6</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">project</span><span class="p">(</span><span class="s">mylib</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">include_directories</span><span class="p">(</span><span class="s">lib/include</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">add_subdirectory</span><span class="p">(</span><span class="s">lib</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">option</span> <span class="p">(</span><span class="s">WITH_TESTS</span> <span class="s2">&quot;build tests&quot;</span> <span class="s">ON</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">if</span> <span class="p">(</span><span class="s">WITH_TESTS</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">add_subdirectory</span><span class="p">(</span><span class="s">test</span><span class="p">)</span>
+</span><span class='line'><span class="nb">endif</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>&hellip;and so is the one to compile the library (in <code>src/CMakeLists.txt</code>):</p>
+
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/CMakeLists.txt'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='cmake'><span class='line'><span class="nb">file</span><span class="p">(</span><span class="s">GLOB_RECURSE</span> <span class="s">mylib_source</span> <span class="s">src/*</span><span class="p">)</span>
+</span><span class='line'><span class="nb">add_library</span><span class="p">(</span><span class="s">mylib</span> <span class="s">SHARED</span> <span class="o">${</span><span class="nv">mylib_source</span><span class="o">}</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">find_package</span><span class="p">(</span><span class="s">OpenCV</span> <span class="s">REQUIRED</span> <span class="s">core</span><span class="p">)</span>
+</span><span class='line'><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">mylib</span> <span class="o">${</span><span class="nv">OpenCV_LIBS</span><span class="o">}</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Last but not least, it is not much more complicated to compile an OpenCV test:</p>
+
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/CMakeLists.txt'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+</pre></td><td class='code'><pre><code class='cmake'><span class='line'><span class="nb">file</span><span class="p">(</span><span class="s">GLOB</span> <span class="s">mytest_source_files</span> <span class="s">*.cpp</span><span class="p">)</span>
+</span><span class='line'><span class="nb">add_executable</span><span class="p">(</span><span class="s">mytest</span> <span class="o">${</span><span class="nv">mytest_source_files</span><span class="o">}</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">mytest</span> <span class="s">mylib</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">find_package</span><span class="p">(</span> <span class="s">OpenCV</span> <span class="s">REQUIRED</span> <span class="s">ts</span><span class="p">)</span>
+</span><span class='line'><span class="nb">target_link_libraries</span><span class="p">(</span> <span class="s">mytest</span> <span class="o">${</span><span class="nv">OpenCV_LIBS</span><span class="o">}</span> <span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And we&rsquo;re done.</p>
+
+<h2>Running the tests</h2>
+
+<p>Finally we can compile averything and run the test in a standard CMake process. Here is the one if you use Makefile:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>mkdir build
+</span><span class='line'><span class="nb">cd </span>build
+</span><span class='line'>cmake ..
+</span><span class='line'>make
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This creates a <code>mytest</code> executable in <code>build/test</code> which can be run to produce this output:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="o">[==========]</span> Running 2 tests from 1 <span class="nb">test </span><span class="k">case</span>.
+</span><span class='line'><span class="o">[</span>----------<span class="o">]</span> Global <span class="nb">test </span>environment <span class="nb">set</span>-up.
+</span><span class='line'><span class="o">[</span>----------<span class="o">]</span> 2 tests from MyTestSuite
+</span><span class='line'><span class="o">[</span> RUN      <span class="o">]</span> MyTestSuite.ATestThatPasses
+</span><span class='line'><span class="o">[</span>       OK <span class="o">]</span> MyTestSuite.ATestThatPasses <span class="o">(</span>0 ms<span class="o">)</span>
+</span><span class='line'><span class="o">[</span> RUN      <span class="o">]</span> MyTestSuite.ATestThatFails
+</span><span class='line'>pathto/opencv/test/mytest.cpp:34: Failure
+</span><span class='line'>Value of: mybool
+</span><span class='line'>  Actual: <span class="nb">false</span>
+</span><span class='line'>Expected: <span class="nb">true</span>
+</span><span class='line'><span class="o">[</span>  FAILED  <span class="o">]</span> MyTestSuite.ATestThatFails <span class="o">(</span>0 ms<span class="o">)</span>
+</span><span class='line'><span class="o">[</span>----------<span class="o">]</span> 2 tests from MyTestSuite <span class="o">(</span>1 ms total<span class="o">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="o">[</span>----------<span class="o">]</span> Global <span class="nb">test </span>environment tear-down
+</span><span class='line'><span class="o">[==========]</span> 2 tests from 1 <span class="nb">test </span><span class="k">case </span>ran. <span class="o">(</span>1 ms total<span class="o">)</span>
+</span><span class='line'><span class="o">[</span>  PASSED  <span class="o">]</span> 1 test.
+</span><span class='line'><span class="o">[</span>  FAILED  <span class="o">]</span> 1 <span class="nb">test</span>, listed below:
+</span><span class='line'><span class="o">[</span>  FAILED  <span class="o">]</span> MyTestSuite.ATestThatFails
+</span><span class='line'>
+</span><span class='line'> 1 FAILED TEST
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Yay!</p>
+
+<h1>Configuring CMake to run the tests</h1>
+
+<p>Now we may want to use several test executables for various reason. For example, we may want to split unrelated test, or split a test that takes too long to run, or make another kind of test (unit tests, performances tests, internationalisation tests or what not), or simply run non C++ executable.</p>
+
+<p>It would be a bit cumbersome to launch them all by hand, especially when CMake integrates testing facilites.</p>
+
+<p>Instead, we simply tell CMake which programs are test programs by adding an <code>enable_testing()</code> directive to the general <code>CMakeLists</code>:</p>
+
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/ctest/CMakeLists.txt'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+</pre></td><td class='code'><pre><code class='cmake'><span class='line'><span class="nb">cmake_minimum_required</span><span class="p">(</span><span class="s">VERSION</span> <span class="s">2.6</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">project</span><span class="p">(</span><span class="s">mylib</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">include_directories</span><span class="p">(</span><span class="s">lib/include</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">add_subdirectory</span><span class="p">(</span><span class="s">lib</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">option</span> <span class="p">(</span><span class="s">WITH_TESTS</span> <span class="s2">&quot;build tests&quot;</span> <span class="s">ON</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">if</span> <span class="p">(</span><span class="s">WITH_TESTS</span><span class="p">)</span>
+</span><span class='line'>  <span class="nb">enable_testing</span><span class="p">()</span>
+</span><span class='line'>  <span class="nb">add_subdirectory</span><span class="p">(</span><span class="s">test</span><span class="p">)</span>
+</span><span class='line'><span class="nb">endif</span><span class="p">()</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We also specify an <code>add_test(testname executablename)</code> directive for each test executable:</p>
+
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/ctest/test/CMakeLists.txt'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+</pre></td><td class='code'><pre><code class='cmake'><span class='line'><span class="nb">file</span><span class="p">(</span><span class="s">GLOB</span> <span class="s">mytest_source_files</span> <span class="s">*.cpp</span><span class="p">)</span>
+</span><span class='line'><span class="nb">add_executable</span><span class="p">(</span><span class="s">mytest</span> <span class="o">${</span><span class="nv">mytest_source_files</span><span class="o">}</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">target_link_libraries</span><span class="p">(</span><span class="s">mytest</span> <span class="s">mylib</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">find_package</span><span class="p">(</span> <span class="s">OpenCV</span> <span class="s">REQUIRED</span> <span class="s">ts</span><span class="p">)</span>
+</span><span class='line'><span class="nb">target_link_libraries</span><span class="p">(</span> <span class="s">mytest</span> <span class="o">${</span><span class="nv">OpenCV_LIBS</span><span class="o">}</span> <span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'><span class="nb">add_test</span><span class="p">(</span><span class="s">mycmaketest</span> <span class="s">mytest</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This way, CMake will create a test target which can be <code>built</code> by your IDE to run the tests. For example when I run <code>make test</code>, I get the following output:</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>Running tests...
+</span><span class='line'>Test project pathto/build
+</span><span class='line'>    Start 1: mycmaketest
+</span><span class='line'>1/1 Test <span class="c">#1: mycmaketest ......................***Failed    0.00 sec</span>
+</span><span class='line'>
+</span><span class='line'>0% tests passed, 1 tests failed out of 1
+</span><span class='line'>
+</span><span class='line'>Total Test <span class="nb">time</span> <span class="o">(</span>real<span class="o">)</span> <span class="o">=</span>   0.01 sec
+</span><span class='line'>
+</span><span class='line'>The following tests FAILED:
+</span><span class='line'>    1 - mycmaketest <span class="o">(</span>Failed<span class="o">)</span>
+</span><span class='line'>Errors <span class="k">while </span>running CTest
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This output is a lot less detailed than the previous one, which makes sense if there are a lot of tests happing, There is also an option to display the output of each test program (as shown before). With make, it&rsquo;s <code>make test ARGS=-V</code>.</p>
+
+<h1>Conclusion</h1>
+
+<p>Of course, there is much more to say about CMake&rsquo;s test facilities or OpenCV&rsquo;s test framework, not to mention the embedded Google Test framework. While the documentation for the former and the latter can be found easily, I have yet to find the documentation for OpenCV&rsquo;s <code>ts</code> module. As an alternative, I guess I&rsquo;ll stick to reading the <a href="https://github.com/Itseez/opencv/tree/master/modules/ts">source of the module</a>, and look at the examples in the test folders of the <a href="https://github.com/Itseez/opencv/tree/master/modules">other modules</a>.</p>
+
+<p>Do not hesitate to comment on the <a href="http://stackoverflow.com/questions/19405601/how-do-i-use-opencvs-test-framework-with-cmake">StackOverflow question</a> if you know more !</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[(Reverse) Literate Programming on Jekyll/Github]]></title>
+    <link href="https://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub/"/>
+    <updated>2011-12-18T00:00:00+01:00</updated>
+    <id>https://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub</id>
+    <content type="html"><![CDATA[<p>In this post I show two ways to document a piece of code on <a href="https://github.com/mojombo/jekyll">Jekyll</a>, the static site generator powering <a href="http://pages.github.com/">GitHub Pages</a> (including this blog).</p>
+
+<h1>The Story Behind the Story</h1>
+
+<p>I tried to explain how this <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-10-25/main.cpp">piece of code</a> found that <a href="https://quentin.bonnard.eu/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force.html"><code>(1+2)!! + 3!^4 - 5 = 2011</code></a>, but C++ is not famous for being concise and transparent. So I tried to give the general idea, and gave the full source in one block, but it was not very satisfying. Full of remorse, I&rsquo;m now writing this post about how I should have written the previous post, so I can sleep at night again.</p>
+
+<p>I&rsquo;ll get some inspiration from <a href="http://en.wikipedia.org/wiki/Literate_programming">literate programming</a>, which I&rsquo;ll quickly present. Then I&rsquo;ll show how it could have been used on the previous post. This method won&rsquo;t work for any language, so I will present another one, based on a pending addition to Jekyll.</p>
+
+<h1>Literate Programming</h1>
+
+<p>Let me copy-paste the definition from the <a href="http://en.wikipedia.org/wiki/Literate_programming">Wikipedia article about literate programming</a> for you:</p>
+
+<blockquote><p>The literate programming paradigm, as conceived by Knuth, represents a move away from writing programs in the manner and order imposed by the computer, and instead enables programmers to develop programs in the order demanded by the logic and flow of their thoughts.</p></blockquote>
+
+<p>Basically, the documentation and the code is written in the same file, but in the order of the natural speech, not in the order expected by the compiler/interpreter, unlike javadoc-alike systems. A preprocessor will extract the code, and reassemble it in the order expected by the compiler/interpreter (hereafter: the processor).</p>
+
+<p>In order to show to the processor that we are serious about not caring about him, literate programming can be done with latex, or a word processor. Yes, I spent an internship coding (<a href="http://research.microsoft.com/en-us/projects/specsharp/">Spec#</a>) within Word, and yes, I actually enjoyed it. More recently I discovered <a href="http://www.stat.uni-muenchen.de/~leisch/Sweave/">Sweave</a> which makes statistical exploration with R enjoyable (for a programmer).</p>
+
+<p>Of course, the rule that any idea has already been implemented (better) and published also applies to <a href="https://github.com/mikaa123/lilp">literate programming with Markdown</a> (Markdown being the notation used to format this article). In this case, a script comments out all the text that is not marked as code. I guess the author calls this &ldquo;<em>lightweight</em> literate programming&rdquo; because the code still has to be written in the order expected by the processor.</p>
+
+<h1>Manual Literate Programming On GitHub&rsquo;s Jekyll</h1>
+
+<p>The idea here is to use the <code>#include</code> directive of the C/C++ preprocessor along with the <code>{% include %}</code> tag of the <a href="https://github.com/mojombo/jekyll/wiki/Liquid-Extensions">Liquid Extensions</a> of Jekyll to build the &ldquo;interconnected &lsquo;webs&rsquo; of macros&rdquo; of Knuth&rsquo;s vision of literate programming. The extraction step is manual: each macro will be written in a separate file.</p>
+
+<p>For example, the core search function seems complicated at first:</p>
+
+<figure class='code'><figcaption><span> (search.messy.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/search.messy.cpp'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="k">template</span> <span class="o">&lt;</span><span class="kt">bool</span> <span class="n">ALL</span><span class="p">,</span> <span class="kt">int</span> <span class="n">VERBOSITY</span><span class="o">&gt;</span>
+</span><span class='line'><span class="kt">void</span> <span class="n">search</span><span class="p">(</span><span class="n">Number</span> <span class="n">expectation</span><span class="p">,</span> <span class="k">const</span> <span class="n">Number</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">EvaluationResult</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'>  <span class="kt">long</span> <span class="n">tRemaingCandidates</span> <span class="o">=</span> <span class="n">factorial</span><span class="p">[</span><span class="n">NBINOPERATIONS</span><span class="p">]</span>
+</span><span class='line'>                    <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">NBINOPERATIONTYPES</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="p">)</span>
+</span><span class='line'>                    <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">MAXFRAC</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="o">+</span><span class="n">NOPERANDS</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+</span><span class='line'>                    <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">MAXSQRT</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="o">+</span><span class="n">NOPERANDS</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">tRemaingCandidates</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; candidates&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">result</span> <span class="o">=</span> <span class="n">evaluateCandidate</span><span class="p">(</span><span class="n">expectation</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">);</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">&amp;</span> <span class="n">VERBOSITY</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">decode</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;: &quot;</span><span class="p">;</span>
+</span><span class='line'>          <span class="n">printCandidate</span><span class="p">();</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="o">--</span><span class="n">tRemaingCandidates</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">ALL</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="n">tRemaingCandidates</span><span class="o">%</span><span class="mi">100000000</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">tRemaingCandidates</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; remaining candidates&quot;</span>
+</span><span class='line'>                  <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">generateNextCandidate</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">ALL</span> <span class="o">||</span> <span class="n">result</span> <span class="o">!=</span> <span class="n">CORRECT</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Actually it is very simple if we extract the code related to printing progress:</p>
+
+<figure class='code'><figcaption><span> (search.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/search.cpp'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#include &quot;a-lot-of-code-before.inc&quot;</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">template</span> <span class="o">&lt;</span><span class="kt">bool</span> <span class="n">ALL</span><span class="p">,</span> <span class="kt">int</span> <span class="n">VERBOSITY</span><span class="o">&gt;</span>
+</span><span class='line'><span class="kt">void</span> <span class="n">search</span><span class="p">(</span><span class="n">Number</span> <span class="n">expectation</span><span class="p">,</span> <span class="k">const</span> <span class="n">Number</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>  <span class="n">EvaluationResult</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'>  <span class="err">#</span><span class="n">include</span> <span class="s">&quot;print-candidate-total.inc&quot;</span>
+</span><span class='line'>  <span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">result</span> <span class="o">=</span> <span class="n">evaluateCandidate</span><span class="p">(</span><span class="n">expectation</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">);</span>
+</span><span class='line'>      <span class="err">#</span><span class="n">include</span> <span class="s">&quot;print-progress.inc&quot;</span>
+</span><span class='line'>  <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">generateNextCandidate</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">ALL</span> <span class="o">||</span> <span class="n">result</span> <span class="o">!=</span> <span class="n">CORRECT</span><span class="p">));</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="cp">#include &quot;a-lot-of-code-after.inc&quot;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>We can detail separately the formula of the total of candidates, by showing only the content of <code>print-candidate-total.inc</code>:</p>
+
+<figure class='code'><figcaption><span> (print-candidate-total.inc)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/print-candidate-total.inc'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="kt">long</span> <span class="n">tRemaingCandidates</span> <span class="o">=</span> <span class="n">factorial</span><span class="p">[</span><span class="n">NBINOPERATIONS</span><span class="p">]</span>
+</span><span class='line'>                <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">NBINOPERATIONTYPES</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="p">)</span>
+</span><span class='line'>                <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">MAXFRAC</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="o">+</span><span class="n">NOPERANDS</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+</span><span class='line'>                <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">MAXSQRT</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="o">+</span><span class="n">NOPERANDS</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'><span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">tRemaingCandidates</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; candidates&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>And we don&rsquo;t even need to show the content of <code>print-progress.inc</code>, because it is just uninteresting print instructions.</p>
+
+<p>The Markdown document becomes something like:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>The core method is pretty simple; generate a solution and try the next:
+</span><span class='line'>{% highlight cpp %}
+</span><span class='line'>{% include 2011-12-18/search.cpp %}
+</span><span class='line'>{% endhighlight %}
+</span><span class='line'>
+</span><span class='line'>Blah blah blah blah blah blah blah blah blah blah blah blah blah blah blah,
+</span><span class='line'>which gives us `(n-1)! * k^n * (s+1)^(n+n-1) * (f+1)^(n+n-1)` candidates: 
+</span><span class='line'>{% highlight cpp %}
+</span><span class='line'>{% include 2011-12-18/print-candidate-total.inc %}
+</span><span class='line'>{% endhighlight %}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>This Markdown document is describing how to write a Markdown document describing other files by including them&hellip; Way too meta for me. If you too need to lower down the abstraction, you can have a look at the files I&rsquo;m talking about:</p>
+
+<ul>
+<li><a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-12-18/explanation.markdown">explanation.markdown</a> is the article describing how the program works</li>
+<li><a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-12-18/search.cpp">search.cpp</a> and <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-12-18/print-candidate-total.inc">print-candidate-total.inc</a> are pieces of code explained in the article.</li>
+<li><a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-12-18/print-progress.inc">print-progress.inc</a>, <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-12-18/a-lot-of-code-before.inc">a-lot-of-code-before.inc</a>, and <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-12-18/a-lot-of-code-after.inc">a-lot-of-code-after.inc</a> is the rest of the code.</li>
+</ul>
+
+
+<p>The whole point of all this is that the code remains compilable (e.g. with <code>g++ -o search search.cpp</code>) without any transformation, just like the monolithic <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-10-25/main.cpp">main.cpp</a>, but the explanation can be a lot more clear. It also means that there is no need to propagate modifications into the description should the code changes or vice versa.</p>
+
+<h1>Reverse Literate Programming on Github&rsquo;s Jekyll</h1>
+
+<p>Now the problem is that a lot of programming languages are too elegant to dirty their parsing hands with the <em>include</em> of a preprocessor. Of course, most languages allow the <em>import</em> of some notion of modules, but it&rsquo;s just the processor trying to dictate us the order in which to describe a program again.</p>
+
+<p>Without heavy weaponry like a real literate programming preprocessor, we will have to call a truce. We&rsquo;ll still write the code in the order of the processor, but explain it in a human order. Anyway, no one actually believed that I wrote the code of previous section in the presented order.</p>
+
+<p>Instead of writing a story that will be transformed into a program, we will write a program that will be reassembled into a story &ndash; hence the <em>reverse</em> literate programming. The feature needed here is to be able to extract parts of the source code. Jekyll&rsquo;s <code>{% include %}</code> can only extract the whole, but if this <a href="https://github.com/qbonnard/jekyll">patch</a> makes it through, we will be able to use blocks like:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>{% extract source.file %}
+</span><span class='line'>  {% after //Some marker %}
+</span><span class='line'>  {% before //Some other marker %}
+</span><span class='line'>{% endextract %}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Where:</p>
+
+<ul>
+<li><code>source.file</code> is the source to include (similarly to the <code>{% include %}</code> tag already in Jekyll),</li>
+<li><code>after</code> is a tag to specify the line after which the content of the file should be included,</li>
+<li><code>before</code> is a tag to specify the first line from which the content of the file will be ignored again.</li>
+</ul>
+
+
+<h2>Example</h2>
+
+<p>For example, if I were to document the code of patch, instead of including the whole file containing:</p>
+
+<figure class='code'><figcaption><span> (extract.rb)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/extract.rb'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'><span class="k">module</span> <span class="nn">Jekyll</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="k">class</span> <span class="nc">ExtractBlock</span> <span class="o">&lt;</span> <span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Block</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">unknown_tag</span><span class="p">(</span><span class="nb">name</span><span class="p">,</span> <span class="n">content</span><span class="p">,</span> <span class="n">tokens</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nb">name</span>
+</span><span class='line'>      <span class="k">when</span> <span class="s2">&quot;after&quot;</span>
+</span><span class='line'>        <span class="vi">@after</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">strip</span>
+</span><span class='line'>      <span class="k">when</span> <span class="s2">&quot;before&quot;</span>
+</span><span class='line'>        <span class="vi">@before</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">strip</span>
+</span><span class='line'>      <span class="k">else</span>
+</span><span class='line'>        <span class="k">super</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="n">tag_name</span><span class="p">,</span> <span class="n">file</span><span class="p">,</span> <span class="n">tokens</span><span class="p">)</span>
+</span><span class='line'>      <span class="k">super</span>
+</span><span class='line'>      <span class="vi">@file</span> <span class="o">=</span> <span class="n">file</span><span class="o">.</span><span class="n">strip</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>    <span class="k">def</span> <span class="nf">render</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>      <span class="n">includes_dir</span> <span class="o">=</span> <span class="no">File</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">registers</span><span class="o">[</span><span class="ss">:site</span><span class="o">].</span><span class="n">source</span><span class="p">,</span> <span class="s1">&#39;_includes&#39;</span><span class="p">)</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">if</span> <span class="no">File</span><span class="o">.</span><span class="n">symlink?</span><span class="p">(</span><span class="n">includes_dir</span><span class="p">)</span>
+</span><span class='line'>        <span class="k">return</span> <span class="s2">&quot;Includes directory &#39;</span><span class="si">#{</span><span class="n">includes_dir</span><span class="si">}</span><span class="s2">&#39; cannot be a symlink&quot;</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">if</span> <span class="vi">@file</span> <span class="o">!~</span> <span class="sr">/^[a-zA-Z0-9_\/\.-]+$/</span> <span class="o">||</span> <span class="vi">@file</span> <span class="o">=~</span> <span class="sr">/\.\//</span> <span class="o">||</span> <span class="vi">@file</span> <span class="o">=~</span> <span class="sr">/\/\./</span>
+</span><span class='line'>        <span class="k">return</span> <span class="s2">&quot;Include file &#39;</span><span class="si">#{</span><span class="vi">@file</span><span class="si">}</span><span class="s2">&#39; contains invalid characters or sequences&quot;</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="no">Dir</span><span class="o">.</span><span class="n">chdir</span><span class="p">(</span><span class="n">includes_dir</span><span class="p">)</span> <span class="k">do</span>
+</span><span class='line'>        <span class="n">choices</span> <span class="o">=</span> <span class="no">Dir</span><span class="o">[</span><span class="s1">&#39;**/*&#39;</span><span class="o">].</span><span class="n">reject</span> <span class="p">{</span> <span class="o">|</span><span class="n">x</span><span class="o">|</span> <span class="no">File</span><span class="o">.</span><span class="n">symlink?</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="p">}</span>
+</span><span class='line'>        <span class="k">if</span> <span class="n">choices</span><span class="o">.</span><span class="n">include?</span><span class="p">(</span><span class="vi">@file</span><span class="p">)</span>
+</span><span class='line'>          <span class="n">source</span> <span class="o">=</span> <span class="no">File</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="vi">@file</span><span class="p">)</span>
+</span><span class='line'>          <span class="c1">#Preceding code is the same as IncludeTag.render</span>
+</span><span class='line'>          <span class="n">matchdata</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">match</span> <span class="sr">/</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@after</span><span class="p">)</span><span class="si">}</span><span class="sr">[^\n]*\n(.*)\n.*</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@before</span><span class="p">)</span><span class="si">}</span><span class="sr">/m</span>
+</span><span class='line'>          <span class="k">if</span> <span class="n">matchdata</span><span class="o">.</span><span class="n">nil?</span> <span class="ow">or</span> <span class="n">matchdata</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span>
+</span><span class='line'>            <span class="k">return</span> <span class="s2">&quot;Unable to determine which lines of &#39;</span><span class="si">#{</span><span class="vi">@file</span><span class="si">}</span><span class="s2">&#39; &quot;</span><span class="o">+</span>
+</span><span class='line'>            <span class="s2">&quot; are between &#39;</span><span class="si">#{</span><span class="vi">@after</span><span class="si">}</span><span class="s2">&#39; and &#39;</span><span class="si">#{</span><span class="vi">@before</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>          <span class="n">source</span> <span class="o">=</span> <span class="n">matchdata</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span>
+</span><span class='line'>          <span class="c1">#Following code is the same as IncludeTag.render</span>
+</span><span class='line'>          <span class="n">partial</span> <span class="o">=</span> <span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Template</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">source</span><span class="p">)</span>
+</span><span class='line'>          <span class="n">context</span><span class="o">.</span><span class="n">stack</span> <span class="k">do</span>
+</span><span class='line'>            <span class="n">partial</span><span class="o">.</span><span class="n">render</span><span class="p">(</span><span class="n">context</span><span class="p">)</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>        <span class="k">else</span>
+</span><span class='line'>          <span class="s2">&quot;Included file &#39;</span><span class="si">#{</span><span class="vi">@file</span><span class="si">}</span><span class="s2">&#39; not found in _includes directory&quot;</span>
+</span><span class='line'>        <span class="k">end</span>
+</span><span class='line'>      <span class="k">end</span>
+</span><span class='line'>    <span class="k">end</span>
+</span><span class='line'>  <span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">end</span>
+</span><span class='line'>
+</span><span class='line'><span class="ss">Liquid</span><span class="p">:</span><span class="ss">:Template</span><span class="o">.</span><span class="n">register_tag</span><span class="p">(</span><span class="s1">&#39;extract&#39;</span><span class="p">,</span> <span class="ss">Jekyll</span><span class="p">:</span><span class="ss">:ExtractBlock</span><span class="p">)</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I could simply write a markdown file containing:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>Blablabla, I just copy-pasted `include.rb` and added this processing to the
+</span><span class='line'>content read from the file:
+</span><span class='line'>{% extract extract.rb %}
+</span><span class='line'>  {% after #Preceding code is the same as IncludeTag.render %}
+</span><span class='line'>  {% before #Following code is the same as IncludeTag.render %}
+</span><span class='line'>{% endextract %}</span></code></pre></td></tr></table></div></figure>
+
+
+<p>Which would give:</p>
+
+<p>Blablabla, I just copy-pasted <code>include.rb</code> and added this processing to the
+content read from the file:</p>
+
+<figure class='code'><figcaption><span> (extract-core.rb)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/extract-core.rb'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+</pre></td><td class='code'><pre><code class='rb'><span class='line'>          <span class="n">matchdata</span> <span class="o">=</span> <span class="n">source</span><span class="o">.</span><span class="n">match</span> <span class="sr">/</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@after</span><span class="p">)</span><span class="si">}</span><span class="sr">[^\n]*\n(.*)\n.*</span><span class="si">#{</span><span class="no">Regexp</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="vi">@before</span><span class="p">)</span><span class="si">}</span><span class="sr">/m</span>
+</span><span class='line'>          <span class="k">if</span> <span class="n">matchdata</span><span class="o">.</span><span class="n">nil?</span> <span class="ow">or</span> <span class="n">matchdata</span><span class="o">.</span><span class="n">size</span> <span class="o">&lt;</span> <span class="mi">2</span>
+</span><span class='line'>            <span class="k">return</span> <span class="s2">&quot;Unable to determine which lines of &#39;</span><span class="si">#{</span><span class="vi">@file</span><span class="si">}</span><span class="s2">&#39; &quot;</span><span class="o">+</span>
+</span><span class='line'>            <span class="s2">&quot; are between &#39;</span><span class="si">#{</span><span class="vi">@after</span><span class="si">}</span><span class="s2">&#39; and &#39;</span><span class="si">#{</span><span class="vi">@before</span><span class="si">}</span><span class="s2">&#39;&quot;</span>
+</span><span class='line'>          <span class="k">end</span>
+</span><span class='line'>          <span class="n">source</span> <span class="o">=</span> <span class="n">matchdata</span><span class="o">[</span><span class="mi">1</span><span class="o">]</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h2>Alternatives</h2>
+
+<p>I can think of two other ways to specify the part of the file to be included. First, specifying the numbers of the first and last line to keep would be the easiest, but it would mean that the documentation has to be updated each time the file changes.</p>
+
+<p>Second, the a <code>from</code>/<code>until</code> pair could specify border lines similarly to the <code>after</code>/<code>before</code> pair, except that the content would include these two lines. The problem here is that premature truncations could happen if we want to stop the inclusion on lines such as <code>}</code> or <code>end</code>.</p>
+
+<p>In the end, the only assumption in the <code>after</code>/<code>before</code> pair is that one can add lines only for the sake of documentation, but I have not seen a programming langage which does not allow comments, so it is always possible to delimit regions.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[The answer is 2011. The question can be brute force.]]></title>
+    <link href="https://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force/"/>
+    <updated>2011-10-25T00:00:00+02:00</updated>
+    <id>https://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force</id>
+    <content type="html"><![CDATA[<p>This post describes a brute-force method to find that <code>(1+2)!! + 3!^4 - 5 = 2011</code> and gives an implementation in C++.</p>
+
+<h1>The story</h1>
+
+<p>The <a href="http://fondation.cartier.com/?_lang=en">Fondation Cartier</a> in Paris created an exhibition called <em>Mathematics &ndash; A Beautiful Elsewhere</em> and invited mathematicians and artists. Among them, <a href="http://en.wikipedia.org/wiki/Takeshi_Kitano">Takeshi Kitano</a> proposed a game called &ldquo;La réponse est 2011&rdquo; (The answer is 2011). The rules are simple:</p>
+
+<ul>
+<li>The player can use the as many number as needed, but in the natural order: 1, 2, 3, 4, 5, etc.</li>
+<li>These numbers can be the operands of <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>^</code> (power), <code>!</code> (factorial), and square root. Parenthesis can be added freely to order these operations.</li>
+<li>The result should be 2011, and the formula should use as few numbers as possible.</li>
+</ul>
+
+
+<p>Takeshi Kitano proposed several answers, the shortest being:</p>
+
+<p><code>(1+2+3)^4 + (5*6*7*8) – (9*10*11) + 12 + 13 = 2011</code></p>
+
+<p>The company of Frédéric, my Ph.D. supervisor, designed the touchscreen allowing to play this game at the exhibition. Frédéric, who tells <a href="http://fkaplan.wordpress.com/2011/10/24/la-reponse-est-2011/">his side of the story</a> in his blog (in French), was warning me at a coffee break that designing an addictive game (just try it!) is actually quite dangerous. When someone realized that the given answer could be improved, the company started losing all its developers in a obsessive compulsive vortex. He also told me that the current best answer used only 6 numbers. My mission in life became clear: save my fellow nerds using brute-force. Turns out, I just ruined their happiness. I&rsquo;ll try to make up for it by sharing the fun I had (solving the problem, not ruining their happiness).</p>
+
+<h1>Enumerating the candidates</h1>
+
+<p>Well, the method is pretty clear: brute force means trying every possibility and checking its validity. The only tricky part is how to enumerate the candidates. This is simpler if we consider only the binary operations first, and consider factorial and square root in a second step.</p>
+
+<p>Noting that applying one of the binary operations will leave us with one less term, we will have to apply <code>n-1</code> operations on <code>n</code> initial numbers. The orders of the initial numbers is fixed, but the parentheses allow the operation to be between any subsequent terms. In other words, the first operation has <code>n-1</code> possible pairs of operands, the second operation has <code>n-2</code>, etc. Each operation can be one of the <code>k</code> different (here <code>k = 5</code>), which gives us</p>
+
+<p><code>(n-1)! * k^n</code></p>
+
+<p>possibilities to try. It&rsquo;s good that &ldquo;my fellow nerds&rdquo; found that <code>n</code> does not have to be greater than <code>6</code>&hellip;</p>
+
+<p>Now the problem is that unary operations can be applied as often as possible. They can be applied to any of the initial numbers, and to any of the results of the binary operations. However, no factorial is a square (except 1), so we can apply the square root first (as many times as we want), and then the factorial, without trying to interleave them. To be thorough, it could happen that an irrational intermediate result gets multiplied with itself, but a little bird told me that it is a lot less frequent than it would cost to try all the permutations of square roots and factorials.</p>
+
+<p>If we apply up to <code>s</code> times square root on each possible term (i.e. the <code>n</code> initial numbers and the <code>n-1</code> results of binary operations), and up to <code>f</code> times the factorial on each possible term, that gives us a grand total of</p>
+
+<p><code>(n-1)! * k^n * (s+1)^(n+n-1) * (f+1)^(n+n-1)</code></p>
+
+<p>possibilities. It&rsquo;s really good that <code>n</code> is upper-bounded by <code>6</code>&hellip;</p>
+
+<p>To summarize, we can describe a candidate with:</p>
+
+<ul>
+<li>a value in the <code>[1,n-1]</code> range, a value in the <code>[1,n-2]</code> range, etc. to code which pair of subsequent operand is used in each of the <code>n-1</code> binary operation,</li>
+<li><code>n-1</code> values in the <code>[1,k]</code> range to code the type of each of the <code>n-1</code> binary operations,</li>
+<li><code>n</code> values in the <code>[0,s]</code> range to code how many square roots are applied to the <code>n</code> initial values, and <code>n-1</code> more in the <code>[0,s]</code> range for the square root applications of each result of the binary operations,</li>
+<li>similarly, <code>n + n-1</code> values in the <code>[0,f]</code> range for the factorials.</li>
+</ul>
+
+
+<p>They say a picture is worth a thousand word. The ratio may be a little lower with ascii art, but let&rsquo;s illustrate these four list item with the winning candidate, i.e. <code>(1+2)!! + 3!^4 - 5</code>. Its evaluation tree looks like that:</p>
+
+<pre><code>1 ---
+     \
+      3 - 6 - 720 ----
+     /                \
+2 ---                  \
+                        2016
+3 - 6 -----------      /    \
+                 \    /      \
+                  1296        \
+                 /             2011
+4 ---------------             /
+                             /
+                            /
+5 --------------------------
+</code></pre>
+
+<p>Beautiful. The binary operations (merging branches) are:</p>
+
+<pre><code>      +          ^      +      -
+</code></pre>
+
+<p>If <code>+</code>, <code>-</code>, <code>*</code>, <code>/</code>, <code>^</code> are respectively coded by 1,2,3,4,5, the second list item will be <code>(1,5,1,2)</code>.</p>
+
+<p>The binary operations are applied to the following pair of operands:</p>
+
+<pre><code>      1          3      1      1
+</code></pre>
+
+<p>which gives us <code>(1,2,1,1)</code> for the first list item. Note that each of these four numbers have been respectively chosen from <code>[1,2,3,4]</code>, <code>[1,2,3]</code>, <code>[1,2]</code>, <code>[1]</code>, which correspond to <code>[(1,2), (2,6), (6,4), (4,5)]</code>, <code>[(720,6), (6,4), (4,5)]</code>, <code>[(720,1296), (1296,5)]</code>, <code>[(2016,5)]</code>, still respectively. It&rsquo;s all about respect.</p>
+
+<p>No square root is applied on the initial numbers, and no square root is applied on intermediary result either, so the third list item is <code>(0,0,0,0,0)</code> and <code>(0,0,0,0)</code>.</p>
+
+<p>Factorial is applied once on the third initial number (a.k.a. <code>3</code>), and twice on the result of the first operation, which gives <code>(0,0,1,0,0)</code> and <code>(2,0,0,0)</code> for the fourth list item.</p>
+
+<h1>Implementation overview</h1>
+
+<p>For the last three item of the previous list, I wrote <code>ExhaustiveEnumeration</code>, a data structure that basically counts in the base corresponding to the range. For example, if <code>n=5</code> and <code>f = 2</code>, the data structure corresponding to the last item of the previous list will count from <code>000000000</code> to <code>222222222</code> in base <code>3</code>.
+For the first item of the list, the same idea of counting in a different base is used, except the base varies with the position. For example, if <code>n=5</code>, the data structure will count from <code>0000</code> to <code>0123</code>. Both data structures simply provide an accessor to the content, and a method that increments the content and notifies whether a full cycle has just been completed.</p>
+
+<p>Using these data structure, I wrote <code>CandidateEnumeration</code>, a class that fully describes a candidate as described in the previous list. It has a search method that evaluates the current candidate, and generates the next until it fits the criteria. To generate the next candidate, it chains the increment methods of the <code>ExhaustiveEnumeration</code>: if one indicates that a full cycle has been completed, it calls the next.</p>
+
+<p>The evaluation method creates an array of the <code>n</code> initial numbers, and applies the operations coded in the <code>ExhaustiveEnumeration</code> members, until the array is reduced to the ultimate result. If an illegal operation (e.g. divide by 0 or negative square root) is detected, the evaluation is aborted.</p>
+
+<p>The rest of the code is basically here only to output the result or the progress. And of course, indices start at 0 rather than at 1 as in the previous section. And the final binary operation is actually the first of the array of the <code>CandidateEnumeration</code>&hellip; Enjoy!</p>
+
+<h1>Code</h1>
+
+<figure class='code'><figcaption><span> (main.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2011-10-25/main.cpp'>download</a></figcaption>
+<div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+<span class='line-number'>161</span>
+<span class='line-number'>162</span>
+<span class='line-number'>163</span>
+<span class='line-number'>164</span>
+<span class='line-number'>165</span>
+<span class='line-number'>166</span>
+<span class='line-number'>167</span>
+<span class='line-number'>168</span>
+<span class='line-number'>169</span>
+<span class='line-number'>170</span>
+<span class='line-number'>171</span>
+<span class='line-number'>172</span>
+<span class='line-number'>173</span>
+<span class='line-number'>174</span>
+<span class='line-number'>175</span>
+<span class='line-number'>176</span>
+<span class='line-number'>177</span>
+<span class='line-number'>178</span>
+<span class='line-number'>179</span>
+<span class='line-number'>180</span>
+<span class='line-number'>181</span>
+<span class='line-number'>182</span>
+<span class='line-number'>183</span>
+<span class='line-number'>184</span>
+<span class='line-number'>185</span>
+<span class='line-number'>186</span>
+<span class='line-number'>187</span>
+<span class='line-number'>188</span>
+<span class='line-number'>189</span>
+<span class='line-number'>190</span>
+<span class='line-number'>191</span>
+<span class='line-number'>192</span>
+<span class='line-number'>193</span>
+<span class='line-number'>194</span>
+<span class='line-number'>195</span>
+<span class='line-number'>196</span>
+<span class='line-number'>197</span>
+<span class='line-number'>198</span>
+<span class='line-number'>199</span>
+<span class='line-number'>200</span>
+<span class='line-number'>201</span>
+<span class='line-number'>202</span>
+<span class='line-number'>203</span>
+<span class='line-number'>204</span>
+<span class='line-number'>205</span>
+<span class='line-number'>206</span>
+<span class='line-number'>207</span>
+<span class='line-number'>208</span>
+<span class='line-number'>209</span>
+<span class='line-number'>210</span>
+<span class='line-number'>211</span>
+<span class='line-number'>212</span>
+<span class='line-number'>213</span>
+<span class='line-number'>214</span>
+<span class='line-number'>215</span>
+<span class='line-number'>216</span>
+<span class='line-number'>217</span>
+<span class='line-number'>218</span>
+<span class='line-number'>219</span>
+<span class='line-number'>220</span>
+<span class='line-number'>221</span>
+<span class='line-number'>222</span>
+<span class='line-number'>223</span>
+<span class='line-number'>224</span>
+<span class='line-number'>225</span>
+<span class='line-number'>226</span>
+<span class='line-number'>227</span>
+<span class='line-number'>228</span>
+<span class='line-number'>229</span>
+<span class='line-number'>230</span>
+<span class='line-number'>231</span>
+<span class='line-number'>232</span>
+<span class='line-number'>233</span>
+<span class='line-number'>234</span>
+<span class='line-number'>235</span>
+<span class='line-number'>236</span>
+<span class='line-number'>237</span>
+<span class='line-number'>238</span>
+<span class='line-number'>239</span>
+<span class='line-number'>240</span>
+<span class='line-number'>241</span>
+<span class='line-number'>242</span>
+<span class='line-number'>243</span>
+<span class='line-number'>244</span>
+<span class='line-number'>245</span>
+<span class='line-number'>246</span>
+<span class='line-number'>247</span>
+<span class='line-number'>248</span>
+<span class='line-number'>249</span>
+<span class='line-number'>250</span>
+<span class='line-number'>251</span>
+<span class='line-number'>252</span>
+<span class='line-number'>253</span>
+<span class='line-number'>254</span>
+<span class='line-number'>255</span>
+<span class='line-number'>256</span>
+<span class='line-number'>257</span>
+<span class='line-number'>258</span>
+<span class='line-number'>259</span>
+<span class='line-number'>260</span>
+<span class='line-number'>261</span>
+<span class='line-number'>262</span>
+<span class='line-number'>263</span>
+<span class='line-number'>264</span>
+<span class='line-number'>265</span>
+<span class='line-number'>266</span>
+<span class='line-number'>267</span>
+<span class='line-number'>268</span>
+<span class='line-number'>269</span>
+<span class='line-number'>270</span>
+<span class='line-number'>271</span>
+<span class='line-number'>272</span>
+<span class='line-number'>273</span>
+<span class='line-number'>274</span>
+<span class='line-number'>275</span>
+<span class='line-number'>276</span>
+<span class='line-number'>277</span>
+<span class='line-number'>278</span>
+<span class='line-number'>279</span>
+<span class='line-number'>280</span>
+<span class='line-number'>281</span>
+<span class='line-number'>282</span>
+<span class='line-number'>283</span>
+<span class='line-number'>284</span>
+<span class='line-number'>285</span>
+<span class='line-number'>286</span>
+<span class='line-number'>287</span>
+<span class='line-number'>288</span>
+<span class='line-number'>289</span>
+<span class='line-number'>290</span>
+<span class='line-number'>291</span>
+<span class='line-number'>292</span>
+<span class='line-number'>293</span>
+<span class='line-number'>294</span>
+<span class='line-number'>295</span>
+<span class='line-number'>296</span>
+<span class='line-number'>297</span>
+<span class='line-number'>298</span>
+<span class='line-number'>299</span>
+</pre></td><td class='code'><pre><code class='cpp'><span class='line'><span class="cp">#include &lt;iostream&gt;</span>
+</span><span class='line'><span class="cp">#include &lt;cmath&gt;</span>
+</span><span class='line'><span class="cp">#include &lt;string&gt;</span>
+</span><span class='line'><span class="cp">#include &lt;sstream&gt;</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// data structure to count from 0 to UPTO^SIZE in base UPTO+1</span>
+</span><span class='line'><span class="c1">// the first FROMINDEX positions remain 0</span>
+</span><span class='line'><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="n">SIZE</span><span class="p">,</span> <span class="n">T</span> <span class="n">UPTO</span><span class="p">,</span> <span class="kt">int</span> <span class="n">FROMINDEX</span> <span class="o">=</span> <span class="mi">0</span><span class="o">&gt;</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">ExhaustiveEnumeration</span> <span class="p">{</span>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>  <span class="n">ExhaustiveEnumeration</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">SIZE</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="n">T</span> <span class="n">get</span><span class="p">(</span><span class="kt">int</span> <span class="n">pIndex</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mData</span><span class="p">[</span><span class="n">pIndex</span><span class="p">];</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">bool</span> <span class="n">increment</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">FROMINDEX</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">SIZE</span> <span class="o">&amp;&amp;</span> <span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">UPTO</span><span class="p">)</span> <span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;=</span> <span class="n">SIZE</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>      <span class="o">++</span><span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">protected</span><span class="o">:</span>
+</span><span class='line'>  <span class="n">T</span> <span class="n">mData</span><span class="p">[</span><span class="n">SIZE</span><span class="p">];</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// datastructure to count from 0 to 012..SIZE-1 in &quot;base&quot; 123..SIZE</span>
+</span><span class='line'><span class="k">template</span> <span class="o">&lt;</span><span class="k">typename</span> <span class="n">T</span><span class="p">,</span> <span class="kt">int</span> <span class="n">SIZE</span><span class="o">&gt;</span>
+</span><span class='line'><span class="k">struct</span> <span class="n">ExhaustiveEnumerationUpToIndex</span> <span class="p">{</span>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>  <span class="n">ExhaustiveEnumerationUpToIndex</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">SIZE</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>  <span class="n">T</span> <span class="n">get</span><span class="p">(</span><span class="kt">int</span> <span class="n">pIndex</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">mData</span><span class="p">[</span><span class="n">pIndex</span><span class="p">];</span> <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">bool</span> <span class="n">increment</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">while</span><span class="p">(</span><span class="n">i</span> <span class="o">&lt;</span> <span class="n">SIZE</span> <span class="o">&amp;&amp;</span> <span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">i</span><span class="p">)</span> <span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="o">++</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;=</span> <span class="n">SIZE</span><span class="p">)</span> <span class="k">return</span> <span class="kc">false</span><span class="p">;</span>
+</span><span class='line'>      <span class="o">++</span><span class="n">mData</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">return</span> <span class="kc">true</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">protected</span><span class="o">:</span>
+</span><span class='line'>  <span class="n">T</span> <span class="n">mData</span><span class="p">[</span><span class="n">SIZE</span><span class="p">];</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">namespace</span> <span class="p">{</span>
+</span><span class='line'>  <span class="c1">// I&#39;m too lazy to use some kind of BigInt...</span>
+</span><span class='line'>  <span class="k">typedef</span> <span class="kt">double</span> <span class="n">Number</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// ...but not enough to hard code factorial</span>
+</span><span class='line'>  <span class="k">const</span> <span class="kt">int</span> <span class="n">MAXFACTARG</span> <span class="o">=</span> <span class="mi">20</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">const</span> <span class="kt">long</span> <span class="n">factorial</span><span class="p">[</span><span class="mi">1</span><span class="o">+</span><span class="n">MAXFACTARG</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span>
+</span><span class='line'>      <span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">24</span><span class="p">,</span><span class="mi">120</span><span class="p">,</span>
+</span><span class='line'>      <span class="mi">720</span><span class="p">,</span><span class="mi">5040</span><span class="p">,</span><span class="mi">40320</span><span class="p">,</span><span class="mi">362880</span><span class="p">,</span><span class="mi">3628800</span><span class="p">,</span>
+</span><span class='line'>      <span class="mi">39916800</span><span class="p">,</span> <span class="mi">479001600</span><span class="p">,</span> <span class="mi">6227020800</span><span class="p">,</span> <span class="mi">87178291200</span><span class="p">,</span> <span class="mi">1307674368000</span><span class="p">,</span>
+</span><span class='line'>      <span class="mi">20922789888000</span><span class="p">,</span> <span class="mi">355687428096000</span><span class="p">,</span> <span class="mi">6402373705728000</span><span class="p">,</span> <span class="mi">121645100408832000</span><span class="p">,</span>
+</span><span class='line'>      <span class="mi">2432902008176640000</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// floating point equality</span>
+</span><span class='line'>  <span class="kr">inline</span> <span class="kt">bool</span> <span class="n">equals</span><span class="p">(</span><span class="n">Number</span> <span class="n">a</span><span class="p">,</span> <span class="n">Number</span> <span class="n">b</span><span class="p">,</span> <span class="n">Number</span> <span class="n">epsilon</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">Number</span> <span class="n">tDelta</span> <span class="o">=</span> <span class="n">a</span><span class="o">-</span><span class="n">b</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">return</span> <span class="p">(</span><span class="o">-</span><span class="n">epsilon</span> <span class="o">&lt;</span> <span class="n">tDelta</span> <span class="o">&amp;&amp;</span> <span class="n">tDelta</span> <span class="o">&lt;</span> <span class="n">epsilon</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// test whether a floating point is (clos enough from) an integer</span>
+</span><span class='line'>  <span class="kr">inline</span> <span class="kt">bool</span> <span class="n">isInt</span><span class="p">(</span><span class="n">Number</span> <span class="n">a</span><span class="p">,</span> <span class="n">Number</span> <span class="n">epsilon</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">equals</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="k">static_cast</span><span class="o">&lt;</span><span class="n">Number</span><span class="o">&gt;</span><span class="p">((</span><span class="kt">long</span><span class="p">)</span> <span class="n">a</span><span class="p">),</span> <span class="n">epsilon</span><span class="p">);</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'><span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="c1">// n = NOPERANDS, f = MAXFRAC, s = MAXSQRT</span>
+</span><span class='line'><span class="k">template</span><span class="o">&lt;</span><span class="kt">int</span> <span class="n">NOPERANDS</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span> <span class="kt">char</span> <span class="n">MAXFRAC</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="kt">char</span> <span class="n">MAXSQRT</span> <span class="o">=</span> <span class="mi">2</span><span class="o">&gt;</span>
+</span><span class='line'><span class="k">class</span> <span class="nc">CandidateEnumeration</span> <span class="p">{</span>
+</span><span class='line'><span class="k">public</span><span class="o">:</span>
+</span><span class='line'>  <span class="n">CandidateEnumeration</span><span class="p">()</span><span class="o">:</span><span class="n">mPairPositions</span><span class="p">(),</span><span class="n">mOps</span><span class="p">(),</span><span class="n">mFacs</span><span class="p">(),</span><span class="n">mSqrt</span><span class="p">()</span> <span class="p">{}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// see decode(EvaluationResult) for a description</span>
+</span><span class='line'>  <span class="k">enum</span> <span class="n">EvaluationResult</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">CORRECT</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">DIVISION</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">FAC_TOO_MUCH</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">FAC_NON_INT</span> <span class="o">=</span> <span class="mi">8</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">FAC_TOO_BIG</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">SQRT</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+</span><span class='line'>      <span class="n">INCORRECT</span> <span class="o">=</span> <span class="mi">64</span><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// mainly do{evaluateCandidate()} while (generateNextCandidate());</span>
+</span><span class='line'>  <span class="c1">// the rest is just progress output</span>
+</span><span class='line'>  <span class="c1">// </span>
+</span><span class='line'>  <span class="c1">// ALL choose whether all candidates should be tried,</span>
+</span><span class='line'>  <span class="c1">// or if the search can be stopped after the first success</span>
+</span><span class='line'>  <span class="c1">// </span>
+</span><span class='line'>  <span class="c1">// VERBOSITY is the bitwise or combination of the EvaluationResult types</span>
+</span><span class='line'>  <span class="c1">// which should be printed</span>
+</span><span class='line'>  <span class="k">template</span> <span class="o">&lt;</span><span class="kt">bool</span> <span class="n">ALL</span><span class="p">,</span> <span class="kt">int</span> <span class="n">VERBOSITY</span><span class="o">&gt;</span>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">search</span><span class="p">(</span><span class="n">Number</span> <span class="n">expectation</span><span class="p">,</span> <span class="k">const</span> <span class="n">Number</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">EvaluationResult</span> <span class="n">result</span><span class="p">;</span>
+</span><span class='line'>      <span class="kt">long</span> <span class="n">tRemaingCandidates</span> <span class="o">=</span> <span class="n">factorial</span><span class="p">[</span><span class="n">NBINOPERATIONS</span><span class="p">]</span>
+</span><span class='line'>                        <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">NBINOPERATIONTYPES</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="p">)</span>
+</span><span class='line'>                        <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">MAXFRAC</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="o">+</span><span class="n">NOPERANDS</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span>
+</span><span class='line'>                        <span class="o">*</span><span class="n">pow</span><span class="p">(</span><span class="n">MAXSQRT</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span><span class="n">NBINOPERATIONS</span><span class="o">+</span><span class="n">NOPERANDS</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>      <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">tRemaingCandidates</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; candidates&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">do</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">result</span> <span class="o">=</span> <span class="n">evaluateCandidate</span><span class="p">(</span><span class="n">expectation</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">&amp;</span> <span class="n">VERBOSITY</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">decode</span><span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;: &quot;</span><span class="p">;</span>
+</span><span class='line'>              <span class="n">printCandidate</span><span class="p">();</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="o">--</span><span class="n">tRemaingCandidates</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(</span><span class="n">ALL</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="n">tRemaingCandidates</span><span class="o">%</span><span class="mi">100000000</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>              <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">tRemaingCandidates</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; remaining candidates&quot;</span>
+</span><span class='line'>                      <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span> <span class="k">while</span> <span class="p">(</span><span class="n">generateNextCandidate</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">ALL</span> <span class="o">||</span> <span class="n">result</span> <span class="o">!=</span> <span class="n">CORRECT</span><span class="p">));</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="kt">void</span> <span class="n">printCandidate</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">tCandidate</span><span class="p">[</span><span class="n">NOPERANDS</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">NOPERANDS</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">std</span><span class="o">::</span><span class="n">stringstream</span> <span class="n">tOperand</span><span class="p">;</span>
+</span><span class='line'>          <span class="n">tOperand</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+</span><span class='line'>          <span class="n">tCandidate</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">buildNode</span><span class="p">(</span><span class="n">tOperand</span><span class="p">.</span><span class="n">str</span><span class="p">(),</span>
+</span><span class='line'>                  <span class="n">mSqrt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">),</span> <span class="n">mFacs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">NBINOPERATIONS</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="kt">int</span> <span class="n">tPairPositionIndex</span> <span class="o">=</span> <span class="n">mPairPositions</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+</span><span class='line'>          <span class="n">tCandidate</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">=</span> <span class="sc">&#39;(&#39;</span>
+</span><span class='line'>                  <span class="o">+</span> <span class="n">tCandidate</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span>
+</span><span class='line'>                  <span class="o">+</span> <span class="n">decode</span><span class="p">(</span><span class="n">mOps</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+</span><span class='line'>                  <span class="o">+</span> <span class="n">tCandidate</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="sc">&#39;)&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="n">tCandidate</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">=</span> <span class="n">buildNode</span><span class="p">(</span>
+</span><span class='line'>                  <span class="n">tCandidate</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">],</span>
+</span><span class='line'>                  <span class="n">mSqrt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">NOPERANDS</span><span class="o">+</span><span class="n">i</span><span class="p">),</span> <span class="n">mFacs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">NOPERANDS</span><span class="o">+</span><span class="n">i</span><span class="p">));</span>
+</span><span class='line'>          <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">&lt;</span><span class="n">NBINOPERATIONS</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="n">tCandidate</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">tCandidate</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>      <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">tCandidate</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// helper of printCandidate()</span>
+</span><span class='line'>  <span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">buildNode</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">string</span> <span class="n">pCore</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pNSqrt</span><span class="p">,</span> <span class="kt">int</span> <span class="n">pNFac</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">pNSqrt</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="n">pCore</span> <span class="o">=</span> <span class="sc">&#39;(&#39;</span><span class="o">+</span><span class="n">pCore</span><span class="o">+</span><span class="sc">&#39;)&#39;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span><span class="o">&lt;</span><span class="n">pNSqrt</span><span class="p">;</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="n">pCore</span><span class="o">=</span><span class="s">&quot;√&quot;</span><span class="o">+</span><span class="n">pCore</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">if</span> <span class="p">(</span><span class="n">pNFac</span><span class="o">&gt;</span><span class="mi">0</span><span class="p">)</span> <span class="n">pCore</span> <span class="o">=</span> <span class="sc">&#39;(&#39;</span><span class="o">+</span><span class="n">pCore</span><span class="o">+</span><span class="sc">&#39;)&#39;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span><span class="o">&lt;</span><span class="n">pNFac</span><span class="p">;</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="n">pCore</span><span class="o">+=</span><span class="sc">&#39;!&#39;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">pCore</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'><span class="k">protected</span><span class="o">:</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// decode the current candidate and check whether it&#39;s the expected result</span>
+</span><span class='line'>  <span class="c1">// or abort if an operation is not possible</span>
+</span><span class='line'>  <span class="n">EvaluationResult</span> <span class="n">evaluateCandidate</span><span class="p">(</span>
+</span><span class='line'>          <span class="n">Number</span> <span class="n">expectation</span><span class="p">,</span> <span class="k">const</span> <span class="n">Number</span> <span class="n">epsilon</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1">// initial numbers and corresponding factorials and square roots</span>
+</span><span class='line'>      <span class="n">Number</span> <span class="n">tResults</span><span class="p">[</span><span class="n">NOPERANDS</span><span class="p">];</span>
+</span><span class='line'>      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span><span class="o">&lt;</span><span class="n">NOPERANDS</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="n">tResults</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">=</span><span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span><span class="o">&lt;</span><span class="n">mSqrt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="n">tResults</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">sqrt</span><span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="n">i</span><span class="p">]);</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span><span class="o">&lt;</span><span class="n">mFacs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">MAXFACTARG</span><span class="p">)</span> <span class="k">return</span> <span class="n">FAC_TOO_MUCH</span><span class="p">;</span>
+</span><span class='line'>              <span class="n">tResults</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">factorial</span><span class="p">[(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tResults</span><span class="p">[</span><span class="n">i</span><span class="p">]];</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="c1">// fetch the operation type and operand pair, compute result</span>
+</span><span class='line'>      <span class="c1">// and apply corresponding factorials and square roots</span>
+</span><span class='line'>      <span class="c1">// </span>
+</span><span class='line'>      <span class="c1">// the result is stored in the cell of the first operand,</span>
+</span><span class='line'>      <span class="c1">// and the intermediary results after the second operand are shifted</span>
+</span><span class='line'>      <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">NBINOPERATIONS</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span> <span class="n">i</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">;</span> <span class="o">--</span><span class="n">i</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="c1">// binary operation</span>
+</span><span class='line'>          <span class="kt">int</span> <span class="n">tPairPositionIndex</span> <span class="o">=</span> <span class="n">mPairPositions</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">);</span>
+</span><span class='line'>          <span class="k">switch</span> <span class="p">(</span><span class="n">mOps</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">case</span> <span class="mi">0</span><span class="o">:</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">+=</span>
+</span><span class='line'>                      <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span> <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">-=</span>
+</span><span class='line'>                      <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span> <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">*=</span>
+</span><span class='line'>                      <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span> <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">/=</span>
+</span><span class='line'>                      <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span> <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">case</span> <span class="mi">4</span><span class="o">:</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">=</span>
+</span><span class='line'>                      <span class="n">pow</span><span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">],</span>
+</span><span class='line'>                              <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">]);</span> <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>              <span class="k">default</span><span class="o">:</span> <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Unexpected opcode:&quot;</span>
+</span><span class='line'>                      <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span> <span class="n">mOps</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span> <span class="k">break</span><span class="p">;</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">isnan</span><span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">])</span>
+</span><span class='line'>              <span class="o">||</span> <span class="n">std</span><span class="o">::</span><span class="n">isinf</span><span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]))</span> <span class="k">return</span> <span class="n">DIVISION</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="c1">// square roots</span>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(</span><span class="n">mSqrt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">NOPERANDS</span><span class="o">+</span><span class="n">i</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</span><span class='line'>                  <span class="o">&amp;&amp;</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mf">0.0</span><span class="p">)</span> <span class="k">return</span> <span class="n">SQRT</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span><span class="o">&lt;</span><span class="n">mSqrt</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">NOPERANDS</span><span class="o">+</span><span class="n">i</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">=</span>
+</span><span class='line'>                      <span class="n">sqrt</span><span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]);</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="c1">// factorial</span>
+</span><span class='line'>          <span class="k">if</span> <span class="p">(</span><span class="n">mFacs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">NOPERANDS</span><span class="o">+</span><span class="n">i</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+</span><span class='line'>                  <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="n">isInt</span><span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">],</span> <span class="n">epsilon</span><span class="p">))</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">return</span> <span class="n">FAC_NON_INT</span><span class="p">;</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>          <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">k</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">k</span><span class="o">&lt;</span><span class="n">mFacs</span><span class="p">.</span><span class="n">get</span><span class="p">(</span><span class="n">NOPERANDS</span><span class="o">+</span><span class="n">i</span><span class="p">);</span> <span class="o">++</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="k">if</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&gt;</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span>
+</span><span class='line'>                  <span class="o">||</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">MAXFACTARG</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>                  <span class="k">return</span> <span class="n">FAC_TOO_BIG</span><span class="p">;</span>
+</span><span class='line'>              <span class="p">}</span>
+</span><span class='line'>              <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]</span> <span class="o">=</span>
+</span><span class='line'>                      <span class="n">factorial</span><span class="p">[(</span><span class="kt">int</span><span class="p">)</span> <span class="n">tResults</span><span class="p">[</span><span class="n">tPairPositionIndex</span><span class="p">]];</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>          <span class="c1">// shifting the intermediate results</span>
+</span><span class='line'>          <span class="k">for</span><span class="p">(</span><span class="kt">int</span> <span class="n">j</span><span class="o">=</span><span class="n">tPairPositionIndex</span><span class="o">+</span><span class="mi">1</span><span class="p">;</span> <span class="n">j</span><span class="o">&lt;</span><span class="n">NBINOPERATIONS</span><span class="p">;</span> <span class="o">++</span><span class="n">j</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>              <span class="n">tResults</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">tResults</span><span class="p">[</span><span class="n">j</span><span class="o">+</span><span class="mi">1</span><span class="p">];</span>
+</span><span class='line'>          <span class="p">}</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>      <span class="k">return</span> <span class="n">equals</span><span class="p">(</span><span class="n">tResults</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">expectation</span><span class="p">,</span> <span class="n">epsilon</span><span class="p">)</span><span class="o">?</span><span class="nl">CORRECT:</span><span class="n">INCORRECT</span><span class="p">;</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// chains the increments</span>
+</span><span class='line'>  <span class="kt">bool</span> <span class="n">generateNextCandidate</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">return</span> <span class="n">mOps</span><span class="p">.</span><span class="n">increment</span><span class="p">()</span>
+</span><span class='line'>              <span class="o">||</span> <span class="n">mPairPositions</span><span class="p">.</span><span class="n">increment</span><span class="p">()</span>
+</span><span class='line'>              <span class="o">||</span> <span class="n">mFacs</span><span class="p">.</span><span class="n">increment</span><span class="p">()</span>
+</span><span class='line'>              <span class="o">||</span> <span class="n">mSqrt</span><span class="p">.</span><span class="n">increment</span><span class="p">();</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// opcode to char</span>
+</span><span class='line'>  <span class="k">static</span> <span class="kt">char</span> <span class="n">decode</span><span class="p">(</span><span class="kt">char</span> <span class="n">op</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">switch</span> <span class="p">(</span><span class="n">op</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>          <span class="k">case</span> <span class="mi">0</span><span class="o">:</span> <span class="k">return</span> <span class="sc">&#39;+&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">case</span> <span class="mi">1</span><span class="o">:</span> <span class="k">return</span> <span class="sc">&#39;-&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">case</span> <span class="mi">2</span><span class="o">:</span> <span class="k">return</span> <span class="sc">&#39;*&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">case</span> <span class="mi">3</span><span class="o">:</span> <span class="k">return</span> <span class="sc">&#39;/&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">case</span> <span class="mi">4</span><span class="o">:</span> <span class="k">return</span> <span class="sc">&#39;^&#39;</span><span class="p">;</span>
+</span><span class='line'>          <span class="k">default</span><span class="o">:</span> <span class="k">return</span> <span class="sc">&#39;?&#39;</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// describes an EvaluationResult</span>
+</span><span class='line'>  <span class="k">static</span> <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">decode</span><span class="p">(</span><span class="n">EvaluationResult</span> <span class="n">result</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">switch</span> <span class="p">(</span><span class="n">result</span><span class="p">)</span> <span class="p">{</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nl">CORRECT:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Solution found&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nl">DIVISION:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Division impossible to perform on an operator&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nl">FAC_TOO_MUCH:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Factorial impossible to perform on a base operand&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nl">FAC_NON_INT:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Factorial impossible to perform on non integer&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nl">FAC_TOO_BIG:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Factorial impossible to perform on an operation result&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nl">SQRT:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Square root impossible to perform&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">case</span> <span class="nl">INCORRECT:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Invalid candidate&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="k">default</span><span class="o">:</span>
+</span><span class='line'>          <span class="k">return</span> <span class="s">&quot;Unexpected result code&quot;</span><span class="p">;</span>
+</span><span class='line'>      <span class="p">}</span>
+</span><span class='line'>  <span class="p">}</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// count of binary operations (n-1)</span>
+</span><span class='line'>  <span class="k">static</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">NBINOPERATIONS</span> <span class="o">=</span> <span class="n">NOPERANDS</span><span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">// count of types of binary operations (k)</span>
+</span><span class='line'>  <span class="k">static</span> <span class="k">const</span> <span class="kt">int</span> <span class="n">NBINOPERATIONTYPES</span> <span class="o">=</span> <span class="mi">5</span><span class="p">;</span>
+</span><span class='line'>
+</span><span class='line'>  <span class="c1">// position of the pair of operands of each binary operation</span>
+</span><span class='line'>  <span class="n">ExhaustiveEnumerationUpToIndex</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">NBINOPERATIONS</span><span class="o">&gt;</span> <span class="n">mPairPositions</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">// type of each binary operation</span>
+</span><span class='line'>  <span class="n">ExhaustiveEnumeration</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">NBINOPERATIONS</span><span class="p">,</span> <span class="n">NBINOPERATIONTYPES</span><span class="o">-</span><span class="mi">1</span><span class="o">&gt;</span> <span class="n">mOps</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">// count of factorials to apply on each initial number or operation result</span>
+</span><span class='line'>  <span class="c1">// it&#39;s useless to try to increase the count of factorials applied to 1 and</span>
+</span><span class='line'>  <span class="c1">// 2, so we skip the first 2 indices in the enumeration</span>
+</span><span class='line'>  <span class="n">ExhaustiveEnumeration</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">NOPERANDS</span><span class="o">+</span><span class="n">NBINOPERATIONS</span><span class="p">,</span> <span class="n">MAXFRAC</span><span class="p">,</span> <span class="mi">2</span><span class="o">&gt;</span> <span class="n">mFacs</span><span class="p">;</span>
+</span><span class='line'>  <span class="c1">// count of square roots to apply on each initial number or operation result</span>
+</span><span class='line'>  <span class="c1">// it&#39;s useless to try to increase the count of square root applied to 1</span>
+</span><span class='line'>  <span class="c1">// so we skip the first  index in the enumeration</span>
+</span><span class='line'>  <span class="n">ExhaustiveEnumeration</span><span class="o">&lt;</span><span class="kt">char</span><span class="p">,</span> <span class="n">NOPERANDS</span><span class="o">+</span><span class="n">NBINOPERATIONS</span><span class="p">,</span> <span class="n">MAXSQRT</span><span class="p">,</span> <span class="mi">1</span><span class="o">&gt;</span> <span class="n">mSqrt</span><span class="p">;</span>
+</span><span class='line'><span class="p">};</span>
+</span><span class='line'>
+</span><span class='line'><span class="kt">int</span> <span class="n">main</span><span class="p">()</span> <span class="p">{</span>
+</span><span class='line'>  <span class="k">typedef</span> <span class="n">CandidateEnumeration</span><span class="o">&lt;</span><span class="mi">5</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="o">&gt;</span> <span class="n">Candidates</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">Candidates</span> <span class="n">tCandidates</span><span class="p">;</span>
+</span><span class='line'>  <span class="n">tCandidates</span><span class="p">.</span><span class="n">search</span><span class="o">&lt;</span><span class="kc">true</span><span class="p">,</span> <span class="n">Candidates</span><span class="o">::</span><span class="n">CORRECT</span><span class="o">&gt;</span><span class="p">(</span><span class="mi">2011</span><span class="p">);</span>
+</span><span class='line'>  <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Done&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+</span><span class='line'>  <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+</span><span class='line'><span class="p">}</span>
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Limitations</h1>
+
+<p>The main limitation of this code is that the number representation (<code>long</code>) does not allow to compute the factorial of numbers above 20, which aborts the computation of potentially correct candidates. The use of <code>double</code> also results in false positive due to rounding errors.</p>
+
+<p>The limitation to this brute force algorithm in general is that there is obviously no end in the increase of the number of application of factorial and square root. I can&rsquo;t think of an upper bound on <code>f</code> and <code>s</code> after which there is no possible solution any more.</p>
+
+<p>That and the lack of interleaved factorials and square roots leaves the door open to solutions with less than 5 initial numbers. I would bet that there aren&rsquo;t any, but I&rsquo;m not sure how to prove it.</p>
+
+<p>Finally, this code can easily be used to play &ldquo;The answer is 2012&rdquo;. I wonder if there are years for which this code is unacceptably long, i.e. years that would require &ldquo;a lot&rdquo; of initial numbers&hellip;</p>
+
+<h1>Comments</h1>
+
+<p>I posted this <a href="http://news.ycombinator.com/item?id=3162663">story on HackerNews</a> and got some interesting feedbacks.</p>
+]]></content>
+  </entry>
+  
+  <entry>
+    <title type="html"><![CDATA[Headless SparkleShare on the host]]></title>
+    <link href="https://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host/"/>
+    <updated>2011-07-29T00:00:00+02:00</updated>
+    <id>https://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host</id>
+    <content type="html"><![CDATA[<p>This post describes how to efficiently synchronize a SparkleShare project with a folder on the host.</p>
+
+<h1>Use-case</h1>
+
+<p>I discovered <a href="http://sparkleshare.org/">SparkleShare</a> today and decided to use it to replace <a href="https://one.ubuntu.com/">Ubuntu One</a>, in a quixotic quest of having total control over my cloud one day. One of my uses of Ubuntu One is for synchronizing some configuration files (<code>~/.bash_alias</code>, <code>~/Templates</code>, etc.) in a common folder (say, <code>configs</code>). Link to these files replace the actual files. e.g. :</p>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'>ln -s ~/configs/.bash_alias ~/.bash_alias
+</span><span class='line'>ln -s ~/configs/Templates ~/Templates
+</span></code></pre></td></tr></table></div></figure>
+
+
+<p>I use my own server as a host of my SparkleShare projects, and I want to use my configuration files on this server.</p>
+
+<h1>My adventures in finding a solution</h1>
+
+<p>I started to search for some headless SparkleShare daemon that would synchronize the <code>configs</code> folder with the git repository that SparkleShare uses as a synchronization hub. Apparently there is a headless version of SparkleShare, but it doesn&rsquo;t seem very clean, so I started playing with the git repository. Puzzled by the <code>--bare</code> option, I found a post explaining <a href="http://sitaramc.github.com/tips/auto-publish.html">how to auto-publish a website using git</a>. It provided me with a solution to my problem, in combination with the <a href="https://github.com/hbons/SparkleShare/wiki/How-to-set-up-your-own-server">instructions to set up my own server from SparkleShare</a>.</p>
+
+<h1>Example</h1>
+
+<figure class='code'><figcaption><span></span></figcaption><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+</pre></td><td class='code'><pre><code class='sh'><span class='line'><span class="c">#create a new SparkleShare project:</span>
+</span><span class='line'>git init --bare configs.git
+</span><span class='line'><span class="nb">cd </span>configs.git
+</span><span class='line'><span class="c">#tell git that the repository is not just a repository</span>
+</span><span class='line'>git config core.bare <span class="nb">false</span>
+</span><span class='line'><span class="c">#tell git where to extract the working copy</span>
+</span><span class='line'>git config core.worktree ~/configs
+</span><span class='line'><span class="c">#tell git not to complain about this apparently bad practice</span>
+</span><span class='line'>git config receive.denyCurrentBranch ignore
+</span><span class='line'><span class="c">#tell git to update the working copy</span>
+</span><span class='line'><span class="c">#each time the repository receives a new commit</span>
+</span><span class='line'>cat &gt; hooks/post-receive <span class="s">&lt;&lt;EOF</span>
+</span><span class='line'><span class="s">#!/bin/sh</span>
+</span><span class='line'><span class="s">git checkout -f</span>
+</span><span class='line'><span class="s">EOF</span>
+</span><span class='line'>chmod +x hooks/post-receive
+</span></code></pre></td></tr></table></div></figure>
+
+
+<h1>Conclusion</h1>
+
+<p>That&rsquo;s it! Now the file you put from other machines in the configs project will be created/updated in the <code>~/configs</code> folder on the host.</p>
+
+<p>PS: if you&rsquo;re an experienced git user and you&rsquo;re having a heart attack, it&rsquo;s probably due to my lack of git terminology and/or git good practice. As an excuse, it is the first time I go beyond git clone, but you will probably recognize the mark of an evil bzr user ;)&hellip; So I would be happy to get some constructive feedback on my git usage, or maybe on the SparkleShare feature that I missed and that does exactly what this post describes, only better&hellip;</p>
+]]></content>
+  </entry>
+  
+</feed>
