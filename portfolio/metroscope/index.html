@@ -4,7 +4,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>The Reflect Table - Quentin Bonnard</title>
+  <title>Metroscope - Quentin Bonnard</title>
   <meta name="author" content="Quentin Bonnard">
 
   
@@ -16,7 +16,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="https://quentin.bonnard.eu/projects/reflect-table">
+  <link rel="canonical" href="https://quentin.bonnard.eu/portfolio/metroscope">
   <link href="/favicon.png" type="image/png" rel="icon">
   <link href="/atom.xml" rel="alternate" title="Quentin Bonnard" type="application/atom+xml">
 
@@ -47,36 +47,53 @@
       <div id="main" class="container">
         <div id="content">
           <div class="row">
-  <aside class="sidebar col-md-3">
+  <nav class="sidebar col-md-3">
     <h3><a href="/">Quentin Bonnard</a></h3>
 <section class="panel panel-default">
   <div class="panel-heading">
-    <h3 class="panel-title"><a href="/contact">Contact</a></h3>
+    <h3 class="panel-title"><a href="/contact">About</a></h3>
+  </div>
+    <div id="about" class="hidden-xs hidden-sm list-group">
+        <a
+            class="list-group-item"
+            href="https://www.linkedin.com/in/quentinbonnard">
+            LinkedIn
+        </a>
+        <a
+            class="list-group-item"
+            href="https://github.com/qbonnard">
+            GitHub
+        </a>
+        <a
+            class="list-group-item "
+            href="/contact">
+            Contact
+        </a>
   </div>
 </section>
 <section class="panel panel-default">
     <div class="panel-heading">
-        <h3 class="panel-title"><a href="/projects">Portfolio</a></h3>
+        <h3 class="panel-title"><a href="/portfolio">Portfolio</a></h3>
     </div>
-    <div id="portfolio" class="list-group">
+    <div id="portfolio" class="hidden-xs hidden-sm list-group">
         <a
             class="list-group-item "
-            href="/projects/chilitags">
+            href="/portfolio/chilitags">
             Chilitags
         </a>
         <a
-            class="list-group-item "
-            href="/projects/metroscope">
+            class="list-group-item active"
+            href="/portfolio/metroscope">
             Metroscope
         </a>
         <a
             class="list-group-item "
-            href="/projects/holographic-showcases">
+            href="/portfolio/holographic-showcases">
             Holographic Showcases
         </a>
         <a
-            class="list-group-item active"
-            href="/projects/reflect-table">
+            class="list-group-item "
+            href="/portfolio/reflect-table">
             Reflect Table
         </a>
     </div>
@@ -86,7 +103,7 @@
     <h3 class="panel-title"><a href="/blog/archives">Blog</a></h3>
   </div>
   
-  <div id="recent_posts" class="list-group">
+  <div id="recent_posts" class="hidden-xs hidden-sm list-group">
     
     <a class="list-group-item " href="/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/">Using OpenCV's Test Framework (With CMake)</a>
     
@@ -99,7 +116,7 @@
   </div>
 </section>
 
-  </aside>
+  </nav>
 
   <div class="page-content col-md-9">
     <article role="article">
@@ -108,20 +125,46 @@
           
           
             <h1 class="entry-title">
-              The Reflect Table
+              Metroscope
               
             </h1>
           
         </header>
       
       <div class="entry-content">
-        <p style="text-align:center;"><img src="/images/projects/reflect/Reflect.jpg" alt="Reflect table" /></p>
+        <p>Metroscope is the name of my thesis project. It aims at supporting the learning of geometry in primary schools, and explore the possibilities of paper as an interface.</p>
 
-<p>Reflect is a meeting table equipped with an array of 8x16 LEDs and three microphones in its center. The microphones separate the sound input into channels corresponding to each of the particiants. Two kinds of information are extracted: the amount of speech for each participants, and their involvement, based on the prosody of their speech. This data is visualized on the LED array. More details can be found on the <a href="http://craft.epfl.ch/lang/en/Reflect">project webpage of Reflect</a>.</p>
+<h2>Augmenting Geometry with a camera+project system</h2>
 
-<p>Reflect is the thesis project of Khaled Bachour. On my arrival at Craft, I helped him design and develop the third generation of the tables. This provided me with experience in signal processing, hardware interfacing, and the deployment of system as robust and autonomous as possible.</p>
+<p>Metroscope is a system based on a camera+projector system, the <a href="http://www.simpliquity.com/#pageTinkerlamp">TinkerLamp</a>. The camera detects objects using fiducial markers (like <a href="/portfolio/chilitags">Chilitags</a>). Their position is given to a program, controlled by these objects. With the projector, the program can display a feedback directly on or around the objects.</p>
 
-<p>The third generation of Reflect also introduced the need of a user input, to allow them to change between modes and visualisations. One of the design goals of the table was to remain as seamless as possible, explaining the LED display, less disruptive than a high resolution screen. I proposed and implemented the use of the microphones as &ldquo;buttons&rdquo; to be scratched ; the system could recognize resulting sound as an input, and know from which of the three microphones it originated.</p>
+<p style="text-align:center;"><img src="/images/portfolio/metroscope/tinkerlamp.jpg" alt="The TinkerLamp: a camera+projector system for Augmented Reality" /></p>
+
+<h2>Paper as an interface</h2>
+
+<p>My thesis aimed at exploring the use of paper as an interface. Instead of using a keyboard, a mouse, and a screen, users can interact directly with pieces of paper.</p>
+
+<p>For example, if a pupil wants to experiment with symmetries, it can use the computer to scan her drawing on one side of an axis, and project its reflection on the other side.</p>
+
+<p style="text-align:center;"><img src="/images/portfolio/metroscope/pen-and-paper.jpg" alt="Interacting with a computer via pen and paper" /></p>
+
+<p>Paper can also be manipulated as an interface without a pen. For example, &ldquo;tool cards&rdquo; can tell the computer to display measurements of quadrilaterals made of cardboard.</p>
+
+<p style="text-align:center;"><img src="/images/portfolio/metroscope/paper-manipulation.jpg" alt="Manipulating pieces of paper to interact with a computer" /></p>
+
+<p>I developed several paper interfaces for various topics in primary school geometry, shown in the following videos: <a href="https://www.youtube.com/watch?v=kwhRUegkz0Y">classifying quadrilaterals</a>, <a href="https://www.youtube.com/watch?v=F_gSwHZ2u1Y">using a protractor</a>, <a href="https://www.youtube.com/watch?v=4p7pK7AYn7E">symmetries</a>. During her internship, Anna Geiduschek developed another one to explore <a href="https://www.youtube.com/watch?v=xyCOXG3Uz_E">fractions</a>.</p>
+
+<h2>Exploring the possibilities of paper</h2>
+
+<p>I tried to explore paper as an interface, using its strengths and affordances rather than emulating existing interfaces with paper. Typically, while it is tempting to use a card as a pointer, it is only a poor approximation of a computer mouse. Similarly, trying to detect the position of fingers on a sheet is a bad way to emulate a touch interface.</p>
+
+<p>Instead, paper has many unique capabilities: it can be used to draw and erase, it can be rotated, shown or hidden, flipped cut, stacked or folded. Further, many practices involve paper: playing cards or board games, paying with bank notes or tickets, filling forms, etc.</p>
+
+<p style="text-align:center;"><img src="/images/portfolio/metroscope/using-paper.jpg" alt="Children learn early the many ways of using paper" /></p>
+
+<p>These practices are already familiar to everyone. They are part of our culture and children are taugh very early to cut, paste, write, and use paper in many ways. Paper is a technology so omni present that we don&rsquo;t even notice it. Schools, offices and homes are filled with sheets, notebooks, maps, books. From the design point of view, paper is a cheap, renewable, mobile, light material. It is a platform commonly supported by common digital devices like printers, scanners, faxes and digital tools like rulers, scissors, tape&hellip;</p>
+
+<p>Paper as an interface can easily leverage this huge opportunity field. It is actually this belief that led me to become a freelance developer, in the hope that I could explore this new frontier.</p>
 
       </div>
       
@@ -130,7 +173,7 @@
           
             <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="https://quentin.bonnard.eu/projects/reflect-table/index.html" data-via="" data-counturl="https://quentin.bonnard.eu/projects/reflect-table/index.html" >Tweet</a>
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="https://quentin.bonnard.eu/portfolio/metroscope/index.html" data-via="" data-counturl="https://quentin.bonnard.eu/portfolio/metroscope/index.html" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
