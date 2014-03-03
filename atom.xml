@@ -4,7 +4,7 @@
   <title><![CDATA[Quentin Bonnard]]></title>
   <link href="https://quentin.bonnard.eu/atom.xml" rel="self"/>
   <link href="https://quentin.bonnard.eu/"/>
-  <updated>2014-03-02T20:59:26+01:00</updated>
+  <updated>2014-03-03T19:53:31+01:00</updated>
   <id>https://quentin.bonnard.eu/</id>
   <author>
     <name><![CDATA[Quentin Bonnard]]></name>
@@ -12,6 +12,38 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[Yes, my Kindle can do this: Flappy bird on paper]]></title>
+    <link href="https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/"/>
+    <updated>2014-03-03T00:00:00+01:00</updated>
+    <id>https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper</id>
+    <content type="html"><![CDATA[<p>This video is a (joke) answer to <a href="http://www.visionect.si/blog/flappy-bird-on-e-paper/">Kindle users, can your reader do this: Flappy bird on e-paper</a></p>
+
+<iframe width="560" height="315" src="https://quentin.bonnard.eu//www.youtube.com/embed/f6VjaOqbQCA" frameborder="0" allowfullscreen></iframe>
+
+
+<p>Yes, I&rsquo;m bad. You can try to do better on the <a href="http://quentin.bonnard.eu/dtmb/">live demo</a>. You will need to print (or display on your favourite device) <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/assets/2014-03-03/8.pdf">this tag</a>.</p>
+
+<h1>How does it work ?</h1>
+
+<p>When Chilitag number 8 (why 8? no idea) is detected, the bird flaps. If the tag was continuously detected, the bird would take off like a rocket, so users naturally make flapping movements with their hand. This has been observed in 100% of the users at the time of this writing (I was alone).</p>
+
+<h1>Why did you do that ?</h1>
+
+<p>It&rsquo;s fun, and I needed an excuse to toy with <a href="https://github.com/qbonnard/chilitags.js">chilitags.js</a>.</p>
+
+<p>OK fine, I also hope this will get someone interested in <a href="https://quentin.bonnard.eu/contact">hiring me</a> to do similarly fun stuff.</p>
+
+<h1>Credits</h1>
+
+<p>This demo is based on <a href="https://github.com/marksteve/dtmb">Heavy Bird</a>. By based, I mean I only added a quick and dirty hack.</p>
+
+<h1>Feedback</h1>
+
+<p>I&rsquo;ll post this article on HackerNews, where I got the idea first.</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Using OpenCV's test framework (with CMake)]]></title>

@@ -4,7 +4,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>Chilitags - Quentin Bonnard</title>
+  <title>Yes, my Kindle can do this: Flappy bird on paper - Quentin Bonnard</title>
   <meta name="author" content="Quentin Bonnard">
 
   
@@ -16,7 +16,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
   
-  <link rel="canonical" href="https://quentin.bonnard.eu/portfolio/chilitags">
+  <link rel="canonical" href="https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper">
   <link href="/favicon.png" type="image/png" rel="icon">
   <link href="/atom.xml" rel="alternate" title="Quentin Bonnard" type="application/atom+xml">
 
@@ -67,7 +67,7 @@
     </div>
     <div id="portfolio" class="hidden-xs hidden-sm list-group">
         <a
-            class="list-group-item active"
+            class="list-group-item "
             href="/portfolio/chilitags">
             Chilitags
         </a>
@@ -95,7 +95,7 @@
   
   <div id="recent_posts" class="hidden-xs hidden-sm list-group">
     
-    <a class="list-group-item " href="/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/">Yes, My Kindle Can Do This: Flappy Bird on Paper</a>
+    <a class="list-group-item active" href="/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/">Yes, My Kindle Can Do This: Flappy Bird on Paper</a>
     
     <a class="list-group-item " href="/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/">Using OpenCV's Test Framework (With CMake)</a>
     
@@ -111,75 +111,93 @@
   </nav>
 
   <div class="page-content col-md-9">
-    <article role="article">
+    <article class="hentry" role="article">
       
-        <header class="page-header">
+  <header class="page-header">
+    
+      <p class="meta text-muted text-uppercase">
+        
+
+
+
+
+
+
+
+
+
+
+
+
+<span class="glyphicon glyphicon-calendar"></span> <time datetime="2014-03-03T00:00:00+01:00" pubdate data-updated="true"></time>
+        
+      </p>
+    
+    
+    <h1 class="entry-title">
+        Yes, My Kindle Can Do This: Flappy Bird on Paper
+        
+    </h1>
+    
+  </header>
+
+
+<div class="entry-content clearfix"><p>This video is a (joke) answer to <a href="http://www.visionect.si/blog/flappy-bird-on-e-paper/">Kindle users, can your reader do this: Flappy bird on e-paper</a></p>
+
+<iframe width="560" height="315" src="//www.youtube.com/embed/f6VjaOqbQCA" frameborder="0" allowfullscreen></iframe>
+
+
+<p>Yes, I&rsquo;m bad. You can try to do better on the <a href="http://quentin.bonnard.eu/dtmb/">live demo</a>. You will need to print (or display on your favourite device) <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/assets/2014-03-03/8.pdf">this tag</a>.</p>
+
+<h1>How does it work ?</h1>
+
+<p>When Chilitag number 8 (why 8? no idea) is detected, the bird flaps. If the tag was continuously detected, the bird would take off like a rocket, so users naturally make flapping movements with their hand. This has been observed in 100% of the users at the time of this writing (I was alone).</p>
+
+<h1>Why did you do that ?</h1>
+
+<p>It&rsquo;s fun, and I needed an excuse to toy with <a href="https://github.com/qbonnard/chilitags.js">chilitags.js</a>.</p>
+
+<p>OK fine, I also hope this will get someone interested in <a href="/contact">hiring me</a> to do similarly fun stuff.</p>
+
+<h1>Credits</h1>
+
+<p>This demo is based on <a href="https://github.com/marksteve/dtmb">Heavy Bird</a>. By based, I mean I only added a quick and dirty hack.</p>
+
+<h1>Feedback</h1>
+
+<p>I&rsquo;ll post this article on HackerNews, where I got the idea first.</p>
+</div>
+
+
+      <footer>
+        <p class="meta text-muted">
           
-          
-            <h1 class="entry-title">
-              Chilitags
-              
-            </h1>
-          
-        </header>
-      
-      <div class="entry-content">
-        <p>I am the lead developer and maintainer of Chilitags, a software library extracted from code developed with my colleagues at <a href="http://chili.epfl.ch">Chili</a> (formerly <a href="http://craft.epfl.ch">Craft</a>). Chilitags is heavily based on <a href="http://opencv.org/">OpenCV</a>.</p>
-
-<h2>Fiducial Markers</h2>
-
-<p>Chilitags are 2D barcodes like <a href="http://en.wikipedia.org/wiki/QR_codes">QR-codes</a>, except they are used as fiducial markers, while QR-codes are a way to transfer text (like a website address) via a camera.  Fiducial markers like Chilitags are designed to be precisely located on an image. For example, Chilitags provide the (x,y) coordinates of their four corners with a sub-pixel precision.</p>
-
-<p>Such fiducial markers can be used to build Augmented Reality systems (like Metroscope), by providing a computer with the position of objects in the real world, so that virtual information can be displayed on them. Typically, a 3D model of a virtual object can be placed on top of a piece of paper containing a tag.
-Robotics is another example application of fiducial markers: a camera embedded in a robot detects and tracks the positions of objects from the real world, or allows the robot to determine its position if the marker set-up is known.</p>
-
-<p>There are other ways to recognize objects with a camera, e.g. with their natural, visual features, which avoid having to mark objects with an ugly barcode. Fiducial markers have their advantages though: it makes the user aware that the object is augmented, they are more reliable, and it is easier to define an object to the augmenting system, as only the numerical identifier of a tag has to be provided, versus complicated features.</p>
-
-<h2>Chilitags Features</h2>
-
-<ul>
-<li>Illumination tolerance: Chilitags were developed for use in projector/camera systems, which required the detection to be robust to the illumination constraints of the projector.</li>
-<li>Precision: Chilitags were used in applications to teach geometry, which required the detection to be as precise as possible to match the requirement on the quality of work of the students.</li>
-<li>Reliability: Chilitags were used for long experiments in ecologically valid conditions, which required to build systems stable even in various, uncontrolled settings.</li>
-</ul>
-
-
-<p style="text-align:center;"> <img src="/images/portfolio/chilitags/unfavorable.jpg" alt="Detection of Chilitags in unfavorable conditions" /></p>
-
-<ul>
-<li>Low resolution: Chilitags can be recognized even from low resolution images (markers as narrow as 20 pixels are recognized). However, they are very sensitive to occlusions: if a border is occluded, the tag will not be detected.</li>
-<li>Efficiency: Chilitags were run on Atom processors, which provide limited computing power.</li>
-<li>Simplicity: Chilitags&rsquo;s interface consists only in two classes, one for the detection of Chilitags, and one for the estimation of their 3D pose. They require little configuration and default to what is best in the general case, while allowing precise tweaking if needed.</li>
-<li>3D pose estimation: the 3D pose of Chilitags can be estimated easily for simple Augmented Reality applications. The calibration parameters of the camera can optionally be provided for an accurate 3D estimation.</li>
-</ul>
-
-
-<p style="text-align:center;"><img src="/images/portfolio/chilitags/3d-pose.jpg" alt="The 3D estimation of a Chilitag in Javascript" /></p>
-
-<ul>
-<li>Filtering: Chilitags embed mechanisms to paliate with the imperfections of the detection: flickering presence of tags and noise in the estimated coordinates.</li>
-<li>Javascript version: an automated port (via LLVM) of <a href="https://github.com/chili-epfl/chilitags.js">Chilitags in Javascript</a> is available.</li>
-</ul>
-
-
-<h2>Links</h2>
-
-<ul>
-<li><a href="http://chili.epfl.ch/software">Official Web Page</a>, include <a href="http://chili.epfl.ch/files/content/sites/chili/files/files/tags.zip">pre-rendered images of Chilitags</a></li>
-<li><a href="https://github.com/chili-epfl/chilitags">Official GitHub repository</a></li>
-<li><a href="https://github.com/chili-epfl/chilitags">GitHub repository for the Javascript port of Chilitags</a></li>
-<li>Live demonstration of <a href="https://chili-research.epfl.ch/chilitags.js/samples/detection-2d/">2D detection</a> and <a href="https://chili-research.epfl.ch/chilitags.js/samples/detection-3d/">3D estimation</a> of Chilitags. You can use the <a href="http://chili.epfl.ch/files/content/sites/chili/files/files/tags.zip">pre-rendered images of Chilitags</a>.</li>
-</ul>
-
-
-      </div>
-      
-        <footer>
-          
-          
-            <div class="sharing">
   
-  <a href="//twitter.com/share" class="twitter-share-button" data-url="https://quentin.bonnard.eu/portfolio/chilitags/index.html" data-via="" data-counturl="https://quentin.bonnard.eu/portfolio/chilitags/index.html" >Tweet</a>
+
+<span class="glyphicon glyphicon-user"></span> <span class="byline author vcard">Posted by <span class="fn">Quentin Bonnard</span></span>
+
+          
+
+
+
+
+
+
+
+
+
+
+
+
+<span class="glyphicon glyphicon-calendar"></span> <time datetime="2014-03-03T00:00:00+01:00" pubdate data-updated="true"></time>
+          
+
+
+        </p>
+        
+          <div class="sharing">
+  
+  <a href="//twitter.com/share" class="twitter-share-button" data-url="https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/" data-via="" data-counturl="https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/" >Tweet</a>
   
   
   <div class="g-plusone" data-size="medium"></div>
@@ -189,9 +207,16 @@ Robotics is another example application of fiducial markers: a camera embedded i
   
 </div>
 
-          
-        </footer>
-      
+        
+        
+          <ul class="meta text-muted pager">
+            
+            <li class="previous"><a href="/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/" title="Previous Post: Using OpenCV's test framework (with CMake)">&laquo; Using OpenCV's test framework (with CMake)</a></li>
+            
+            
+          </ul>
+        
+      </footer>
     </article>
     
   </div>
