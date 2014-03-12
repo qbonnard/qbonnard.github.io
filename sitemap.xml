@@ -1,99 +1,99 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <urlset xmlns='http://www.sitemaps.org/schemas/sitemap/0.9'>
     <url>
-        <loc>https://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host/</loc>
+        <loc>http://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host/</loc>
         <lastmod>2014-01-28T16:11:50+01:00</lastmod>
     </url>
     <url>
         <loc>
-            https://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force/
+            http://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force/
         </loc>
         <lastmod>2014-01-28T16:11:50+01:00</lastmod>
     </url>
     <url>
         <loc>
-            https://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub/
+            http://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub/
         </loc>
         <lastmod>2014-01-28T16:11:50+01:00</lastmod>
     </url>
     <url>
         <loc>
-            https://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/
+            http://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/
         </loc>
         <lastmod>2014-01-28T16:11:50+01:00</lastmod>
     </url>
     <url>
         <loc>
-            https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/
+            http://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/
         </loc>
         <lastmod>2014-03-03T21:20:37+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper/</loc>
+        <loc>http://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper/</loc>
         <lastmod>2014-03-12T18:20:34+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/portfolio/chilitags/</loc>
+        <loc>http://quentin.bonnard.eu/portfolio/chilitags/</loc>
         <lastmod>2014-01-28T16:25:35+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/portfolio/holographic-showcases/</loc>
+        <loc>http://quentin.bonnard.eu/portfolio/holographic-showcases/</loc>
         <lastmod>2014-01-28T16:26:18+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/portfolio/</loc>
+        <loc>http://quentin.bonnard.eu/portfolio/</loc>
         <lastmod>2014-01-28T16:45:41+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/portfolio/reflect-table/</loc>
+        <loc>http://quentin.bonnard.eu/portfolio/reflect-table/</loc>
         <lastmod>2014-01-28T16:26:40+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/portfolio/metroscope/</loc>
+        <loc>http://quentin.bonnard.eu/portfolio/metroscope/</loc>
         <lastmod>2014-01-28T16:27:04+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/blog/archives/</loc>
+        <loc>http://quentin.bonnard.eu/blog/archives/</loc>
         <lastmod>2014-03-12T18:20:34+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/</loc>
+        <loc>http://quentin.bonnard.eu/</loc>
         <lastmod>2014-03-12T18:20:34+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/robots.txt</loc>
+        <loc>http://quentin.bonnard.eu/robots.txt</loc>
         <lastmod>2014-01-24T14:55:12+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/contact/</loc>
+        <loc>http://quentin.bonnard.eu/contact/</loc>
         <lastmod>2014-03-12T18:20:34+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/assets/bootstrap/css.html</loc>
+        <loc>http://quentin.bonnard.eu/assets/bootstrap/css.html</loc>
         <lastmod>2014-01-28T12:46:18+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/assets/bootstrap/about.html</loc>
+        <loc>http://quentin.bonnard.eu/assets/bootstrap/about.html</loc>
         <lastmod>2014-01-28T12:46:18+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/assets/bootstrap/</loc>
+        <loc>http://quentin.bonnard.eu/assets/bootstrap/</loc>
         <lastmod>2014-03-12T18:20:34+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/assets/bootstrap/components.html</loc>
+        <loc>http://quentin.bonnard.eu/assets/bootstrap/components.html</loc>
         <lastmod>2014-01-28T12:46:18+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/assets/bootstrap/javascript.html</loc>
+        <loc>http://quentin.bonnard.eu/assets/bootstrap/javascript.html</loc>
         <lastmod>2014-01-28T12:46:18+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/assets/bootstrap/customize.html</loc>
+        <loc>http://quentin.bonnard.eu/assets/bootstrap/customize.html</loc>
         <lastmod>2014-01-28T12:46:18+01:00</lastmod>
     </url>
     <url>
-        <loc>https://quentin.bonnard.eu/assets/bootstrap/getting-started.html</loc>
+        <loc>http://quentin.bonnard.eu/assets/bootstrap/getting-started.html</loc>
         <lastmod>2014-01-28T12:46:18+01:00</lastmod>
     </url>
 </urlset>

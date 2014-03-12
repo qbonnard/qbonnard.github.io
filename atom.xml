@@ -2,10 +2,10 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
 
   <title><![CDATA[Quentin Bonnard]]></title>
-  <link href="https://quentin.bonnard.eu/atom.xml" rel="self"/>
-  <link href="https://quentin.bonnard.eu/"/>
-  <updated>2014-03-12T18:20:35+01:00</updated>
-  <id>https://quentin.bonnard.eu/</id>
+  <link href="http://quentin.bonnard.eu/atom.xml" rel="self"/>
+  <link href="http://quentin.bonnard.eu/"/>
+  <updated>2014-03-12T20:11:18+01:00</updated>
+  <id>http://quentin.bonnard.eu/</id>
   <author>
     <name><![CDATA[Quentin Bonnard]]></name>
     
@@ -15,9 +15,9 @@
   
   <entry>
     <title type="html"><![CDATA[AR 2048: play with paper]]></title>
-    <link href="https://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper/"/>
+    <link href="http://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper/"/>
     <updated>2014-03-12T00:00:00+01:00</updated>
-    <id>https://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper</id>
+    <id>http://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper</id>
     <content type="html"><![CDATA[<p><a href="http://gabrielecirulli.github.io/2048/">2048</a> is a simple, wonderful HTML5 game where you can collapse numbers on a grid if they are the same, in order to sum them up to 2048. Don&rsquo;t try it now, it&rsquo;s too addictive and you&rsquo;ll never come back to read the rest of this article.</p>
 
 <p>Apparently, 2048 is the new Hello World on Hacker News. There has been an <a href="http://ov3y.github.io/2048-AI/">AI version</a>, and a <a href="http://emils.github.io/2048-multiplayer/">multiplayer version</a>. Naturally, I thought I would give a try to an Augmented Reality version. You can try <a href="http://quentin.bonnard.eu/2048/">it here</a>.</p>
@@ -41,40 +41,40 @@
 
 <p>Show the printed tag to the webcam:</p>
 
-<p style="text-align:center;"> <img src="https://quentin.bonnard.eu/images/blog/2014/03/12/example1.jpg" alt="Show the printed tag to the webcam" /></p>
+<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2014/03/12/example1.jpg" alt="Show the printed tag to the webcam" /></p>
 
 <p>Or the digital version of the tag:</p>
 
-<p style="text-align:center;"> <img src="https://quentin.bonnard.eu/images/blog/2014/03/12/example3.jpg" alt="Or the digital version of the tag" /></p>
+<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2014/03/12/example3.jpg" alt="Or the digital version of the tag" /></p>
 
 <p>The game should replace the image of the tag:</p>
 
-<p style="text-align:center;"> <img src="https://quentin.bonnard.eu/images/blog/2014/03/12/example2.jpg" alt="The game should replace the image of the tag" /></p>
+<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2014/03/12/example2.jpg" alt="The game should replace the image of the tag" /></p>
 
 <p>Tilt the tag/game up to send the number tiles up:</p>
 
-<p style="text-align:center;"> <img src="https://quentin.bonnard.eu/images/blog/2014/03/12/example4.jpg" alt="Tilt the tag/game up to send the number tiles up" /></p>
+<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2014/03/12/example4.jpg" alt="Tilt the tag/game up to send the number tiles up" /></p>
 
 <p>Tilt the tag/game left to send the number tiles left:</p>
 
-<p style="text-align:center;"> <img src="https://quentin.bonnard.eu/images/blog/2014/03/12/example5.jpg" alt="Tilt the tag/game left to send the number tiles left" /></p>
+<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2014/03/12/example5.jpg" alt="Tilt the tag/game left to send the number tiles left" /></p>
 
 <p>That&rsquo;s it!</p>
 
 <h2>Hire me!</h2>
 
-<p>And of course, if you need some help on a similar project, do not hesitate to <a href="https://quentin.bonnard.eu/contact">contact me !</a></p>
+<p>And of course, if you need some help on a similar project, do not hesitate to <a href="http://quentin.bonnard.eu/contact">contact me !</a></p>
 ]]></content>
   </entry>
   
   <entry>
     <title type="html"><![CDATA[Yes, my Kindle can do this: Flappy bird on paper]]></title>
-    <link href="https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/"/>
+    <link href="http://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/"/>
     <updated>2014-03-03T00:00:00+01:00</updated>
-    <id>https://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper</id>
+    <id>http://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper</id>
     <content type="html"><![CDATA[<p>This video is a (joke) answer to <a href="http://www.visionect.si/blog/flappy-bird-on-e-paper/">Kindle users, can your reader do this: Flappy bird on e-paper</a></p>
 
-<iframe width="560" height="315" src="https://quentin.bonnard.eu//www.youtube.com/embed/f6VjaOqbQCA" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="http://quentin.bonnard.eu//www.youtube.com/embed/f6VjaOqbQCA" frameborder="0" allowfullscreen></iframe>
 
 
 <p>Yes, I&rsquo;m bad. You can try to do better on the <a href="http://quentin.bonnard.eu/dtmb/">live demo</a>. You will need to print (or display on your favourite device) <a href="https://github.com/qbonnard/qbonnard.github.io/raw/master/assets/2014-03-03/8.pdf">this tag</a>. The demo needs to access your webcam via the getUserMedia/Stream API, which means it works only on Firefox, Chrome and Opera. It should work on their mobile versions though. Firefox has the best performances, thanks to the asm.js optimisations.</p>
@@ -87,7 +87,7 @@
 
 <p>It&rsquo;s fun, and I needed an excuse to toy with <a href="https://github.com/qbonnard/chilitags.js">chilitags.js</a>.</p>
 
-<p>OK fine, I also hope this will get someone interested in <a href="https://quentin.bonnard.eu/contact">hiring me</a> to do similarly fun stuff.</p>
+<p>OK fine, I also hope this will get someone interested in <a href="http://quentin.bonnard.eu/contact">hiring me</a> to do similarly fun stuff.</p>
 
 <h1>Credits</h1>
 
@@ -101,9 +101,9 @@
   
   <entry>
     <title type="html"><![CDATA[Using OpenCV's test framework (with CMake)]]></title>
-    <link href="https://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/"/>
+    <link href="http://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/"/>
     <updated>2013-10-16T00:00:00+02:00</updated>
-    <id>https://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake</id>
+    <id>http://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake</id>
     <content type="html"><![CDATA[<p>This post explains how to set up tests making use of OpenCV&rsquo;s built in framework.</p>
 
 <h1>Introduction</h1>
@@ -125,7 +125,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>Let&rsquo;s say we want to test a dummy library, whose interface is declared in <code>mylib.hpp</code>:</p>
 
-<figure class='code'><figcaption><span> (mylib.hpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/include/mylib.hpp'>download</a></figcaption>
+<figure class='code'><figcaption><span> (mylib.hpp)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/include/mylib.hpp'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -151,7 +151,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>and implemented in <code>mylib.cpp</code>:</p>
 
-<figure class='code'><figcaption><span> (mylib.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/src/mylib.cpp'>download</a></figcaption>
+<figure class='code'><figcaption><span> (mylib.cpp)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/src/mylib.cpp'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -171,7 +171,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>We first write a simple test case in <code>mytest.cpp</code>:</p>
 
-<figure class='code'><figcaption><span> (mytest.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/mytest.cpp'>download</a></figcaption>
+<figure class='code'><figcaption><span> (mytest.cpp)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/mytest.cpp'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -247,7 +247,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>This test cases will be automagically run in a specified folder if they are compiled with such <code>test_main.cpp</code>:</p>
 
-<figure class='code'><figcaption><span> (test_main.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/test_main.cpp'>download</a></figcaption>
+<figure class='code'><figcaption><span> (test_main.cpp)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/test_main.cpp'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -291,7 +291,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>The general CMakeLists is standard&hellip;</p>
 
-<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/CMakeLists.txt'>download</a></figcaption>
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/opencv/CMakeLists.txt'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -323,7 +323,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>&hellip;and so is the one to compile the library (in <code>src/CMakeLists.txt</code>):</p>
 
-<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/CMakeLists.txt'>download</a></figcaption>
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/opencv/lib/CMakeLists.txt'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -339,7 +339,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>Last but not least, it is not much more complicated to compile an OpenCV test:</p>
 
-<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/CMakeLists.txt'>download</a></figcaption>
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/opencv/test/CMakeLists.txt'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -429,7 +429,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>Instead, we simply tell CMake which programs are test programs by adding an <code>enable_testing()</code> directive to the general <code>CMakeLists</code>:</p>
 
-<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/ctest/CMakeLists.txt'>download</a></figcaption>
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/ctest/CMakeLists.txt'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -463,7 +463,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>We also specify an <code>add_test(testname executablename)</code> directive for each test executable:</p>
 
-<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='https://quentin.bonnard.eu/_includes/2013-10-16/ctest/test/CMakeLists.txt'>download</a></figcaption>
+<figure class='code'><figcaption><span> (CMakeLists.txt)</span> <a href='http://quentin.bonnard.eu/_includes/2013-10-16/ctest/test/CMakeLists.txt'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -526,14 +526,14 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
   
   <entry>
     <title type="html"><![CDATA[(Reverse) Literate Programming on Jekyll/Github]]></title>
-    <link href="https://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub/"/>
+    <link href="http://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub/"/>
     <updated>2011-12-18T00:00:00+01:00</updated>
-    <id>https://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub</id>
+    <id>http://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub</id>
     <content type="html"><![CDATA[<p>In this post I show two ways to document a piece of code on <a href="https://github.com/mojombo/jekyll">Jekyll</a>, the static site generator powering <a href="http://pages.github.com/">GitHub Pages</a> (including this blog).</p>
 
 <h1>The Story Behind the Story</h1>
 
-<p>I tried to explain how this <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-10-25/main.cpp">piece of code</a> found that <a href="https://quentin.bonnard.eu/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force.html"><code>(1+2)!! + 3!^4 - 5 = 2011</code></a>, but C++ is not famous for being concise and transparent. So I tried to give the general idea, and gave the full source in one block, but it was not very satisfying. Full of remorse, I&rsquo;m now writing this post about how I should have written the previous post, so I can sleep at night again.</p>
+<p>I tried to explain how this <a href="https://raw.github.com/qbonnard/qbonnard.github.com/master/_includes/2011-10-25/main.cpp">piece of code</a> found that <a href="http://quentin.bonnard.eu/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force.html"><code>(1+2)!! + 3!^4 - 5 = 2011</code></a>, but C++ is not famous for being concise and transparent. So I tried to give the general idea, and gave the full source in one block, but it was not very satisfying. Full of remorse, I&rsquo;m now writing this post about how I should have written the previous post, so I can sleep at night again.</p>
 
 <p>I&rsquo;ll get some inspiration from <a href="http://en.wikipedia.org/wiki/Literate_programming">literate programming</a>, which I&rsquo;ll quickly present. Then I&rsquo;ll show how it could have been used on the previous post. This method won&rsquo;t work for any language, so I will present another one, based on a pending addition to Jekyll.</p>
 
@@ -555,7 +555,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>For example, the core search function seems complicated at first:</p>
 
-<figure class='code'><figcaption><span> (search.messy.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/search.messy.cpp'>download</a></figcaption>
+<figure class='code'><figcaption><span> (search.messy.cpp)</span> <a href='http://quentin.bonnard.eu/_includes/2011-12-18/search.messy.cpp'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -605,7 +605,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>Actually it is very simple if we extract the code related to printing progress:</p>
 
-<figure class='code'><figcaption><span> (search.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/search.cpp'>download</a></figcaption>
+<figure class='code'><figcaption><span> (search.cpp)</span> <a href='http://quentin.bonnard.eu/_includes/2011-12-18/search.cpp'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -637,7 +637,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>We can detail separately the formula of the total of candidates, by showing only the content of <code>print-candidate-total.inc</code>:</p>
 
-<figure class='code'><figcaption><span> (print-candidate-total.inc)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/print-candidate-total.inc'>download</a></figcaption>
+<figure class='code'><figcaption><span> (print-candidate-total.inc)</span> <a href='http://quentin.bonnard.eu/_includes/2011-12-18/print-candidate-total.inc'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -719,7 +719,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 
 <p>For example, if I were to document the code of patch, instead of including the whole file containing:</p>
 
-<figure class='code'><figcaption><span> (extract.rb)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/extract.rb'>download</a></figcaption>
+<figure class='code'><figcaption><span> (extract.rb)</span> <a href='http://quentin.bonnard.eu/_includes/2011-12-18/extract.rb'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -858,7 +858,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
 <p>Blablabla, I just copy-pasted <code>include.rb</code> and added this processing to the
 content read from the file:</p>
 
-<figure class='code'><figcaption><span> (extract-core.rb)</span> <a href='https://quentin.bonnard.eu/_includes/2011-12-18/extract-core.rb'>download</a></figcaption>
+<figure class='code'><figcaption><span> (extract-core.rb)</span> <a href='http://quentin.bonnard.eu/_includes/2011-12-18/extract-core.rb'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -886,9 +886,9 @@ content read from the file:</p>
   
   <entry>
     <title type="html"><![CDATA[The answer is 2011. The question can be brute force.]]></title>
-    <link href="https://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force/"/>
+    <link href="http://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force/"/>
     <updated>2011-10-25T00:00:00+02:00</updated>
-    <id>https://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force</id>
+    <id>http://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force</id>
     <content type="html"><![CDATA[<p>This post describes a brute-force method to find that <code>(1+2)!! + 3!^4 - 5 = 2011</code> and gives an implementation in C++.</p>
 
 <h1>The story</h1>
@@ -985,7 +985,7 @@ For the first item of the list, the same idea of counting in a different base is
 
 <h1>Code</h1>
 
-<figure class='code'><figcaption><span> (main.cpp)</span> <a href='https://quentin.bonnard.eu/_includes/2011-10-25/main.cpp'>download</a></figcaption>
+<figure class='code'><figcaption><span> (main.cpp)</span> <a href='http://quentin.bonnard.eu/_includes/2011-10-25/main.cpp'>download</a></figcaption>
 <div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
 <span class='line-number'>3</span>
@@ -1605,9 +1605,9 @@ For the first item of the list, the same idea of counting in a different base is
   
   <entry>
     <title type="html"><![CDATA[Headless SparkleShare on the host]]></title>
-    <link href="https://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host/"/>
+    <link href="http://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host/"/>
     <updated>2011-07-29T00:00:00+02:00</updated>
-    <id>https://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host</id>
+    <id>http://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host</id>
     <content type="html"><![CDATA[<p>This post describes how to efficiently synchronize a SparkleShare project with a folder on the host.</p>
 
 <h1>Use-case</h1>

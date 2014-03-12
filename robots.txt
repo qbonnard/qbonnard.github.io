@@ -1,4 +1,4 @@
 User-agent: *
 Disallow: 
 
-Sitemap: https://quentin.bonnard.eu/sitemap.xml 
+Sitemap: http://quentin.bonnard.eu/sitemap.xml 
