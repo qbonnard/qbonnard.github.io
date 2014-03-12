@@ -4,7 +4,7 @@
   <title><![CDATA[Quentin Bonnard]]></title>
   <link href="https://quentin.bonnard.eu/atom.xml" rel="self"/>
   <link href="https://quentin.bonnard.eu/"/>
-  <updated>2014-03-12T16:14:52+01:00</updated>
+  <updated>2014-03-12T16:26:04+01:00</updated>
   <id>https://quentin.bonnard.eu/</id>
   <author>
     <name><![CDATA[Quentin Bonnard]]></name>
@@ -12,6 +12,15 @@
   </author>
   <generator uri="http://octopress.org/">Octopress</generator>
 
+  
+  <entry>
+    <title type="html"><![CDATA[AR 2048: play with paper]]></title>
+    <link href="https://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper/"/>
+    <updated>2014-03-12T00:00:00+01:00</updated>
+    <id>https://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper</id>
+    <content type="html"><![CDATA[<p>More details to come&hellip;</p>
+]]></content>
+  </entry>
   
   <entry>
     <title type="html"><![CDATA[Yes, my Kindle can do this: Flappy bird on paper]]></title>
