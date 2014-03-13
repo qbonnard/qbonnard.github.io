@@ -4,7 +4,7 @@
 <!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
 <head>
   <meta charset="utf-8">
-  <title>AR 2048: play with paper - Quentin Bonnard</title>
+  <title>2048 in Augmented Reality - Quentin Bonnard</title>
   <meta name="author" content="Quentin Bonnard">
 
   
@@ -95,7 +95,7 @@
   
   <div id="recent_posts" class="hidden-xs hidden-sm list-group">
     
-    <a class="list-group-item active" href="/blog/2014/03/12/ar-2048-play-with-paper/">AR 2048: Play With Paper</a>
+    <a class="list-group-item active" href="/blog/2014/03/12/ar-2048-play-with-paper/">2048 in Augmented Reality</a>
     
     <a class="list-group-item " href="/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/">Yes, My Kindle Can Do This: Flappy Bird on Paper</a>
     
@@ -135,16 +135,18 @@
     
     
     <h1 class="entry-title">
-        AR 2048: Play With Paper
+        2048 in Augmented Reality
         
     </h1>
     
   </header>
 
 
-<div class="entry-content clearfix"><p><a href="http://gabrielecirulli.github.io/2048/">2048</a> is a simple, wonderful HTML5 game where you can collapse numbers on a grid if they are the same, in order to sum them up to 2048. Don&rsquo;t try it now, it&rsquo;s too addictive and you&rsquo;ll never come back to read the rest of this article.</p>
+<div class="entry-content clearfix"><p><a href="http://gabrielecirulli.github.io/2048/">2048</a> is a simple, wonderful HTML5 game where you can combine numbers on tiles, in order to sum them up to 2048. Don&rsquo;t try it now, it&rsquo;s too addictive and you&rsquo;ll never come back to read the rest of this article.</p>
 
-<p>Apparently, 2048 is the new Hello World on Hacker News. There has been an <a href="http://ov3y.github.io/2048-AI/">AI version</a>, and a <a href="http://emils.github.io/2048-multiplayer/">multiplayer version</a>. Naturally, I thought I would give a try to an Augmented Reality version. You can try <a href="http://quentin.bonnard.eu/2048/">it here</a>.</p>
+<p>Every day brings a new flavour of 2048 to Hacker News. After the <a href="http://ov3y.github.io/2048-AI/">AI version</a> and the <a href="http://emils.github.io/2048-multiplayer/">multiplayer version</a>, I propose the Augmented Reality version.</p>
+
+<p>You can try the <a href="http://quentin.bonnard.eu/2048/">live demo in your browser</a>.</p>
 
 <h2>How to play (the longer version)</h2>
 
@@ -153,17 +155,19 @@
 <ul>
 <li><p>Go to the <a href="http://quentin.bonnard.eu/2048/">live demo</a> with Firefox or Chrome. Apparently Opera is also able to use the webcam. Forget Safari and IE&hellip; you weren&rsquo;t seriously considering, were you ?</p></li>
 <li><p>Share the webcam with the webpage. You can stay in your underwear, I swear I don&rsquo;t upload any data.</p></li>
-<li><p>Print the image of the tag at <a href="http://goo.gl/GWdcT2">http://goo.gl/GWdcT2</a>) or display it on your phone if you don&rsquo;t have a printer.</p></li>
-<li><p>Show the tag to make the game appear. Tilt it to make the tiles slide in one way or the other (up, down, right, left).</p></li>
-<li><p>The demo is incredibly slow, because the tags are detected synchronously with the display of the game. It is still playable though, if you forget about the nice animations from the original game&hellip;</p></li>
+<li><p>Print the image of the tag at <a href="http://goo.gl/GWdcT2">http://goo.gl/GWdcT2</a>) or display it on your phone if you don&rsquo;t have a printer. Here is a <a href="http://goo.gl/GWdcT2.qr">qr-code that links to the tag</a>, if you feel more like scanning it than typing the address.</p></li>
+<li><p>Show the tag to make the game appear. Tilt it to make the tiles slide in one way or the other (up, down, right, left). See illustrations below.</p></li>
 </ul>
 
 
-<h2>With pictures</h2>
+<h2>How to play (the illustrated version)</h2>
 
 <p>Controling an HTML5 game with pieces of paper is not exactly mainstream, so I will illustrate the interaction with pictures.</p>
 
-<p>Show the printed tag to the webcam:</p>
+<ol>
+<li>Show the printed tag to the webcam:</li>
+</ol>
+
 
 <p style="text-align:center;"> <img src="/images/blog/2014/03/12/example1.jpg" alt="Show the printed tag to the webcam" /></p>
 
@@ -185,9 +189,13 @@
 
 <p>That&rsquo;s it!</p>
 
+<h2>Shortcomings</h2>
+
+<p>The nice animations of the original 2048 are gone, because the game board is transformed into a canvas texture to display in the 3D scene. Another solution would be to transform the game board using CSS 3D transforms, and overlay it on the video&hellip; I may keep this for another afternoon hack.</p>
+
 <h2>Hire me!</h2>
 
-<p>And of course, if you need some help on a similar project, do not hesitate to <a href="/contact">contact me !</a></p>
+<p>If you need some help on a similar project, do not hesitate to <a href="/contact">contact me !</a></p>
 </div>
 
 
