@@ -1,0 +1,5 @@
+sed "s/- /-0/" picard2.txt > picard3.txt
+sed "s/. /.0/" picard3.txt > picard4.txt
+sort picard4.txt > picard5.txt
+cut picard5.txt -d ":" -f 2 > picard6.txt
+tr '\n' ',' < picard6.txt > picard7.txt
