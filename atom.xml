@@ -4,7 +4,7 @@
   <title><![CDATA[Quentin Bonnard]]></title>
   <link href="http://quentin.bonnard.eu/atom.xml" rel="self"/>
   <link href="http://quentin.bonnard.eu/"/>
-  <updated>2015-02-12T16:56:59+01:00</updated>
+  <updated>2017-02-12T20:58:45+00:00</updated>
   <id>http://quentin.bonnard.eu/</id>
   <author>
     <name><![CDATA[Quentin Bonnard]]></name>
@@ -14,9 +14,536 @@
 
   
   <entry>
+    <title type="html"><![CDATA[Tweet positive HN posts without coding]]></title>
+    <link href="http://quentin.bonnard.eu/blog/2017/02/10/tweet-positive-HN-posts-without-code/"/>
+    <updated>2017-02-10T00:00:00+00:00</updated>
+    <id>http://quentin.bonnard.eu/blog/2017/02/10/tweet-positive-HN-posts-without-code</id>
+    <content type="html"><![CDATA[<p>This posts reports on a little experiment with <a href="http://nodered.org/">Node-RED</a>, using its visual data flow editor to fetch HN posts, filter those with positive words in the comments, and tweet them on <a href="http://twitter.com/positivehn">@positiveHN</a>.</p>
+
+<h1>The flow</h1>
+
+<p>I recently came across <a href="http://nodered.org/">Node-RED</a> and wondered how good it would be as a tool to automate a few things I find more and more annoying to do manually. A friend of mine challenged me to use it to tweet &ldquo;positive&rdquo; posts from Hacker News (mostly because there was a sentiment analysis node as part of the built-in set of node). Extra points for making it without code (even though there is a <code>function</code> node to write arbitrary javascript to process messages).</p>
+
+<p>Here is the result:</p>
+
+<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2017/02/10/tweet-positive-hn-flow.png" alt="A Node-RED flow to tweet HackerNews posts with positive words in the comments." /></p>
+
+<p>It works as follows:</p>
+
+<ul>
+<li><code>Parse HN's RSS feed</code> creates a new <em>message</em> (Node RED&rsquo;s unit of processing) every time a new article appears in HN&rsquo;s RSS feed.</li>
+<li><code>limit 5 msg/s</code> will make sure that no more that no more than 5 messages per second go through the rest of the flow. HackerNews seems to dislike too frequent requests, as made in the next node.</li>
+<li><code>fetch comments</code> requests the comment web page of the post</li>
+<li><code>keep text only</code> extracts the comments from the web page</li>
+<li><code>join</code> merges all the comments into one text</li>
+<li><code>sentiment</code> analyses the text</li>
+<li><code>positive only</code> lets only messages with a positive score through</li>
+<li><code>title &gt; 120 chars ?</code> switches messages depending on whether the title of hte post is longer than 120 characters</li>
+<li><code>truncate title</code> shortens the long title</li>
+<li><code>long title</code> produces a tweet with the shortened title (adding suspension mark) and the url of the post</li>
+<li><code>short title</code> simply produces a tweet with the title and the url of the post</li>
+<li><code>Tweet</code> publishes the tweet on <a href="http://twitter.com/positivehn">@positiveHN</a>.</li>
+</ul>
+
+
+<h1>Persistence</h1>
+
+<p>Node-RED is event-based, which makes it not naturally persistence-friendly. In this example, I tried to keep track of which (positive) posts had already been tweeted, in order to avoid duplicate on Twitter. Turns out, Twitter already reject duplicates, but before I realized that, I had found two hacks to tilt at that windmill.</p>
+
+<p>The first one was a really dirty hack, makeing use of the fact that an exception was thrown when trying to open an non-existent file, and that a special node was able to catch exceptions. Thus, for every message coming frome the feed parsing node, the url of the post was base64 encoded and used as a filename to open. If the open succeeded, nothing more happened, but if it failed, it meant that the url hadn&rsquo;t been handled yet. The exception catching node would then initiate another flow that would tweet and save an empty file with the base64 encoded url as name. I did warn it was dirty.</p>
+
+<p>A slightly-less-hacky-but-still-not-ideal working alternative was to store the urls in a file. The flow would read the file for each message, move its content somewhere in the message, and check whether the url was in the content. If so, it meant that the url had already been processed, otherwhise, the flow would go one by tweeting the url and saving it into the file. I&rsquo;m not sure how parallel read and write are handled&hellip; so using a database would sound like a better idea. But again, all this was unnessary, since Twitter already does (a better) job. Yay!</p>
+
+<h1>Shortcomings</h1>
+
+<p>A better use of the persistence would be to reprocess the list of posts until they reach a positive score or disappear from the homepage. As it is, the sentiment analysis will be performed as soon as a post lands in the stream, i.e. as soon as it reaches the homepage. If not enough comments have been written by then, or too few are positive, the url will never be tweeted, even if the comments become positive afterwards.</p>
+
+<p>Another issue that could be addressed by keeping track of which url has been processed is linked to the fact that the feed parsing node forgets which urls have already been sent through the pipeline between restarts of the server. Again, it is not a problem in this case because Twitter will duplicate updates, but it would be for example if we send an email instead of a tweet.</p>
+
+<h1>Comments</h1>
+
+<p>Let&rsquo;s see if <a href="">the discussion of this post on HN</a> will be positive ;)</p>
+
+<h1>Appendix</h1>
+
+<p>Here is the flow to import into Node RED, if you want to tinker with it:</p>
+
+<figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
+<span class='line-number'>2</span>
+<span class='line-number'>3</span>
+<span class='line-number'>4</span>
+<span class='line-number'>5</span>
+<span class='line-number'>6</span>
+<span class='line-number'>7</span>
+<span class='line-number'>8</span>
+<span class='line-number'>9</span>
+<span class='line-number'>10</span>
+<span class='line-number'>11</span>
+<span class='line-number'>12</span>
+<span class='line-number'>13</span>
+<span class='line-number'>14</span>
+<span class='line-number'>15</span>
+<span class='line-number'>16</span>
+<span class='line-number'>17</span>
+<span class='line-number'>18</span>
+<span class='line-number'>19</span>
+<span class='line-number'>20</span>
+<span class='line-number'>21</span>
+<span class='line-number'>22</span>
+<span class='line-number'>23</span>
+<span class='line-number'>24</span>
+<span class='line-number'>25</span>
+<span class='line-number'>26</span>
+<span class='line-number'>27</span>
+<span class='line-number'>28</span>
+<span class='line-number'>29</span>
+<span class='line-number'>30</span>
+<span class='line-number'>31</span>
+<span class='line-number'>32</span>
+<span class='line-number'>33</span>
+<span class='line-number'>34</span>
+<span class='line-number'>35</span>
+<span class='line-number'>36</span>
+<span class='line-number'>37</span>
+<span class='line-number'>38</span>
+<span class='line-number'>39</span>
+<span class='line-number'>40</span>
+<span class='line-number'>41</span>
+<span class='line-number'>42</span>
+<span class='line-number'>43</span>
+<span class='line-number'>44</span>
+<span class='line-number'>45</span>
+<span class='line-number'>46</span>
+<span class='line-number'>47</span>
+<span class='line-number'>48</span>
+<span class='line-number'>49</span>
+<span class='line-number'>50</span>
+<span class='line-number'>51</span>
+<span class='line-number'>52</span>
+<span class='line-number'>53</span>
+<span class='line-number'>54</span>
+<span class='line-number'>55</span>
+<span class='line-number'>56</span>
+<span class='line-number'>57</span>
+<span class='line-number'>58</span>
+<span class='line-number'>59</span>
+<span class='line-number'>60</span>
+<span class='line-number'>61</span>
+<span class='line-number'>62</span>
+<span class='line-number'>63</span>
+<span class='line-number'>64</span>
+<span class='line-number'>65</span>
+<span class='line-number'>66</span>
+<span class='line-number'>67</span>
+<span class='line-number'>68</span>
+<span class='line-number'>69</span>
+<span class='line-number'>70</span>
+<span class='line-number'>71</span>
+<span class='line-number'>72</span>
+<span class='line-number'>73</span>
+<span class='line-number'>74</span>
+<span class='line-number'>75</span>
+<span class='line-number'>76</span>
+<span class='line-number'>77</span>
+<span class='line-number'>78</span>
+<span class='line-number'>79</span>
+<span class='line-number'>80</span>
+<span class='line-number'>81</span>
+<span class='line-number'>82</span>
+<span class='line-number'>83</span>
+<span class='line-number'>84</span>
+<span class='line-number'>85</span>
+<span class='line-number'>86</span>
+<span class='line-number'>87</span>
+<span class='line-number'>88</span>
+<span class='line-number'>89</span>
+<span class='line-number'>90</span>
+<span class='line-number'>91</span>
+<span class='line-number'>92</span>
+<span class='line-number'>93</span>
+<span class='line-number'>94</span>
+<span class='line-number'>95</span>
+<span class='line-number'>96</span>
+<span class='line-number'>97</span>
+<span class='line-number'>98</span>
+<span class='line-number'>99</span>
+<span class='line-number'>100</span>
+<span class='line-number'>101</span>
+<span class='line-number'>102</span>
+<span class='line-number'>103</span>
+<span class='line-number'>104</span>
+<span class='line-number'>105</span>
+<span class='line-number'>106</span>
+<span class='line-number'>107</span>
+<span class='line-number'>108</span>
+<span class='line-number'>109</span>
+<span class='line-number'>110</span>
+<span class='line-number'>111</span>
+<span class='line-number'>112</span>
+<span class='line-number'>113</span>
+<span class='line-number'>114</span>
+<span class='line-number'>115</span>
+<span class='line-number'>116</span>
+<span class='line-number'>117</span>
+<span class='line-number'>118</span>
+<span class='line-number'>119</span>
+<span class='line-number'>120</span>
+<span class='line-number'>121</span>
+<span class='line-number'>122</span>
+<span class='line-number'>123</span>
+<span class='line-number'>124</span>
+<span class='line-number'>125</span>
+<span class='line-number'>126</span>
+<span class='line-number'>127</span>
+<span class='line-number'>128</span>
+<span class='line-number'>129</span>
+<span class='line-number'>130</span>
+<span class='line-number'>131</span>
+<span class='line-number'>132</span>
+<span class='line-number'>133</span>
+<span class='line-number'>134</span>
+<span class='line-number'>135</span>
+<span class='line-number'>136</span>
+<span class='line-number'>137</span>
+<span class='line-number'>138</span>
+<span class='line-number'>139</span>
+<span class='line-number'>140</span>
+<span class='line-number'>141</span>
+<span class='line-number'>142</span>
+<span class='line-number'>143</span>
+<span class='line-number'>144</span>
+<span class='line-number'>145</span>
+<span class='line-number'>146</span>
+<span class='line-number'>147</span>
+<span class='line-number'>148</span>
+<span class='line-number'>149</span>
+<span class='line-number'>150</span>
+<span class='line-number'>151</span>
+<span class='line-number'>152</span>
+<span class='line-number'>153</span>
+<span class='line-number'>154</span>
+<span class='line-number'>155</span>
+<span class='line-number'>156</span>
+<span class='line-number'>157</span>
+<span class='line-number'>158</span>
+<span class='line-number'>159</span>
+<span class='line-number'>160</span>
+<span class='line-number'>161</span>
+<span class='line-number'>162</span>
+<span class='line-number'>163</span>
+<span class='line-number'>164</span>
+<span class='line-number'>165</span>
+<span class='line-number'>166</span>
+<span class='line-number'>167</span>
+<span class='line-number'>168</span>
+<span class='line-number'>169</span>
+<span class='line-number'>170</span>
+<span class='line-number'>171</span>
+<span class='line-number'>172</span>
+<span class='line-number'>173</span>
+<span class='line-number'>174</span>
+<span class='line-number'>175</span>
+<span class='line-number'>176</span>
+<span class='line-number'>177</span>
+<span class='line-number'>178</span>
+<span class='line-number'>179</span>
+<span class='line-number'>180</span>
+<span class='line-number'>181</span>
+<span class='line-number'>182</span>
+<span class='line-number'>183</span>
+<span class='line-number'>184</span>
+<span class='line-number'>185</span>
+<span class='line-number'>186</span>
+<span class='line-number'>187</span>
+<span class='line-number'>188</span>
+<span class='line-number'>189</span>
+<span class='line-number'>190</span>
+<span class='line-number'>191</span>
+<span class='line-number'>192</span>
+<span class='line-number'>193</span>
+<span class='line-number'>194</span>
+<span class='line-number'>195</span>
+<span class='line-number'>196</span>
+<span class='line-number'>197</span>
+<span class='line-number'>198</span>
+<span class='line-number'>199</span>
+<span class='line-number'>200</span>
+<span class='line-number'>201</span>
+<span class='line-number'>202</span>
+<span class='line-number'>203</span>
+<span class='line-number'>204</span>
+<span class='line-number'>205</span>
+<span class='line-number'>206</span>
+<span class='line-number'>207</span>
+<span class='line-number'>208</span>
+<span class='line-number'>209</span>
+<span class='line-number'>210</span>
+<span class='line-number'>211</span>
+<span class='line-number'>212</span>
+<span class='line-number'>213</span>
+<span class='line-number'>214</span>
+<span class='line-number'>215</span>
+<span class='line-number'>216</span>
+<span class='line-number'>217</span>
+<span class='line-number'>218</span>
+<span class='line-number'>219</span>
+<span class='line-number'>220</span>
+<span class='line-number'>221</span>
+<span class='line-number'>222</span>
+<span class='line-number'>223</span>
+<span class='line-number'>224</span>
+<span class='line-number'>225</span>
+<span class='line-number'>226</span>
+<span class='line-number'>227</span>
+<span class='line-number'>228</span>
+<span class='line-number'>229</span>
+<span class='line-number'>230</span>
+<span class='line-number'>231</span>
+<span class='line-number'>232</span>
+<span class='line-number'>233</span>
+<span class='line-number'>234</span>
+</pre></td><td class='code'><pre><code class=''><span class='line'>[
+</span><span class='line'>    {
+</span><span class='line'>        "id": "f24d4456.2acf58",
+</span><span class='line'>        "type": "feedparse",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "Parse HN's RSS feed",
+</span><span class='line'>        "url": "https://news.ycombinator.com/rss",
+</span><span class='line'>        "interval": "1",
+</span><span class='line'>        "x": 347,
+</span><span class='line'>        "y": 238,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "bbbfef8e.5229b8"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "194d8318.d5c7ad",
+</span><span class='line'>        "type": "http request",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "fetch comments",
+</span><span class='line'>        "method": "GET",
+</span><span class='line'>        "ret": "txt",
+</span><span class='line'>        "url": "}",
+</span><span class='line'>        "tls": "",
+</span><span class='line'>        "x": 493.875,
+</span><span class='line'>        "y": 330.5,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "8f2f189a.7c4f38"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "8feccdd1.b5b48",
+</span><span class='line'>        "type": "sentiment",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "",
+</span><span class='line'>        "x": 311.125,
+</span><span class='line'>        "y": 522,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "9fe15e58.b67db"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "8f2f189a.7c4f38",
+</span><span class='line'>        "type": "html",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "keep text only",
+</span><span class='line'>        "tag": "div.comment span",
+</span><span class='line'>        "ret": "text",
+</span><span class='line'>        "as": "single",
+</span><span class='line'>        "x": 327.5,
+</span><span class='line'>        "y": 428,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "24ff4198.fca71e"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "24ff4198.fca71e",
+</span><span class='line'>        "type": "join",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "",
+</span><span class='line'>        "mode": "custom",
+</span><span class='line'>        "build": "string",
+</span><span class='line'>        "property": "payload",
+</span><span class='line'>        "propertyType": "msg",
+</span><span class='line'>        "key": "topic",
+</span><span class='line'>        "joiner": "\\n",
+</span><span class='line'>        "timeout": "",
+</span><span class='line'>        "count": "1",
+</span><span class='line'>        "x": 480.5,
+</span><span class='line'>        "y": 428,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "8feccdd1.b5b48"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "9fe15e58.b67db",
+</span><span class='line'>        "type": "switch",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "positive only",
+</span><span class='line'>        "property": "sentiment.score",
+</span><span class='line'>        "propertyType": "msg",
+</span><span class='line'>        "rules": [
+</span><span class='line'>            {
+</span><span class='line'>                "t": "gt",
+</span><span class='line'>                "v": "0",
+</span><span class='line'>                "vt": "num"
+</span><span class='line'>            }
+</span><span class='line'>        ],
+</span><span class='line'>        "checkall": "true",
+</span><span class='line'>        "outputs": 1,
+</span><span class='line'>        "x": 470.5,
+</span><span class='line'>        "y": 522,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "a6426eab.664338"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "4c2dc9df.bb824",
+</span><span class='line'>        "type": "twitter out",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "twitter": "",
+</span><span class='line'>        "name": "Tweet",
+</span><span class='line'>        "x": 846.5,
+</span><span class='line'>        "y": 628,
+</span><span class='line'>        "wires": []
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "a62ee7eb.16d048",
+</span><span class='line'>        "type": "template",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "short title",
+</span><span class='line'>        "field": "payload",
+</span><span class='line'>        "fieldType": "msg",
+</span><span class='line'>        "format": "handlebars",
+</span><span class='line'>        "syntax": "mustache",
+</span><span class='line'>        "template": "} }",
+</span><span class='line'>        "x": 686.5,
+</span><span class='line'>        "y": 654,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "4c2dc9df.bb824"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "a6426eab.664338",
+</span><span class='line'>        "type": "switch",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "title &gt; 120 chars ?",
+</span><span class='line'>        "property": "article.title.length",
+</span><span class='line'>        "propertyType": "msg",
+</span><span class='line'>        "rules": [
+</span><span class='line'>            {
+</span><span class='line'>                "t": "gt",
+</span><span class='line'>                "v": "120",
+</span><span class='line'>                "vt": "num"
+</span><span class='line'>            },
+</span><span class='line'>            {
+</span><span class='line'>                "t": "else"
+</span><span class='line'>            }
+</span><span class='line'>        ],
+</span><span class='line'>        "checkall": "true",
+</span><span class='line'>        "outputs": 2,
+</span><span class='line'>        "x": 337.5,
+</span><span class='line'>        "y": 625,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "fa7acd8f.799d68"
+</span><span class='line'>            ],
+</span><span class='line'>            [
+</span><span class='line'>                "a62ee7eb.16d048"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "da4cb6f0.97bfc8",
+</span><span class='line'>        "type": "template",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "long title",
+</span><span class='line'>        "field": "payload",
+</span><span class='line'>        "fieldType": "msg",
+</span><span class='line'>        "format": "handlebars",
+</span><span class='line'>        "syntax": "mustache",
+</span><span class='line'>        "template": "}... }",
+</span><span class='line'>        "x": 688,
+</span><span class='line'>        "y": 605,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "4c2dc9df.bb824"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "fa7acd8f.799d68",
+</span><span class='line'>        "type": "change",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "truncate title",
+</span><span class='line'>        "rules": [
+</span><span class='line'>            {
+</span><span class='line'>                "t": "set",
+</span><span class='line'>                "p": "article.title",
+</span><span class='line'>                "pt": "msg",
+</span><span class='line'>                "to": "$substring(msg.article.title, 0, 120)",
+</span><span class='line'>                "tot": "jsonata"
+</span><span class='line'>            }
+</span><span class='line'>        ],
+</span><span class='line'>        "action": "",
+</span><span class='line'>        "property": "",
+</span><span class='line'>        "from": "",
+</span><span class='line'>        "to": "",
+</span><span class='line'>        "reg": false,
+</span><span class='line'>        "x": 537,
+</span><span class='line'>        "y": 605,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "da4cb6f0.97bfc8"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "bbbfef8e.5229b8",
+</span><span class='line'>        "type": "delay",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "",
+</span><span class='line'>        "pauseType": "rate",
+</span><span class='line'>        "timeout": "5",
+</span><span class='line'>        "timeoutUnits": "seconds",
+</span><span class='line'>        "rate": "5",
+</span><span class='line'>        "nbRateUnits": "1",
+</span><span class='line'>        "rateUnits": "second",
+</span><span class='line'>        "randomFirst": "100",
+</span><span class='line'>        "randomLast": "500",
+</span><span class='line'>        "randomUnits": "milliseconds",
+</span><span class='line'>        "drop": false,
+</span><span class='line'>        "x": 315.5,
+</span><span class='line'>        "y": 331,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "194d8318.d5c7ad"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    }
+</span><span class='line'>]</span></code></pre></td></tr></table></div></figure>
+
+]]></content>
+  </entry>
+  
+  <entry>
     <title type="html"><![CDATA[2048 in Augmented Reality]]></title>
     <link href="http://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper/"/>
-    <updated>2014-03-12T00:00:00+01:00</updated>
+    <updated>2014-03-12T00:00:00+00:00</updated>
     <id>http://quentin.bonnard.eu/blog/2014/03/12/ar-2048-play-with-paper</id>
     <content type="html"><![CDATA[<p><a href="http://gabrielecirulli.github.io/2048/">2048</a> is a simple, wonderful HTML5 game where you can combine numbers on tiles, in order to sum them up to 2048. Don&rsquo;t try it now, it&rsquo;s too addictive and you&rsquo;ll never come back to read the rest of this article.</p>
 
@@ -78,7 +605,7 @@
   <entry>
     <title type="html"><![CDATA[Yes, my Kindle can do this: Flappy bird on paper]]></title>
     <link href="http://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper/"/>
-    <updated>2014-03-03T00:00:00+01:00</updated>
+    <updated>2014-03-03T00:00:00+00:00</updated>
     <id>http://quentin.bonnard.eu/blog/2014/03/03/Yes_my_Kindle_can_do_this_Flappy_bird_on_paper</id>
     <content type="html"><![CDATA[<p>This video is a (joke) answer to <a href="http://www.visionect.si/blog/flappy-bird-on-e-paper/">Kindle users, can your reader do this: Flappy bird on e-paper</a></p>
 
@@ -110,7 +637,7 @@
   <entry>
     <title type="html"><![CDATA[Using OpenCV's test framework (with CMake)]]></title>
     <link href="http://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake/"/>
-    <updated>2013-10-16T00:00:00+02:00</updated>
+    <updated>2013-10-16T00:00:00+00:00</updated>
     <id>http://quentin.bonnard.eu/blog/2013/10/16/Using-OpenCV_s_test_framework_with_CMake</id>
     <content type="html"><![CDATA[<p>This post explains how to set up tests making use of OpenCV&rsquo;s built in framework.</p>
 
@@ -535,7 +1062,7 @@ After a short comparisons for testing frameworks, it seemed that Google Test wou
   <entry>
     <title type="html"><![CDATA[(Reverse) Literate Programming on Jekyll/Github]]></title>
     <link href="http://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub/"/>
-    <updated>2011-12-18T00:00:00+01:00</updated>
+    <updated>2011-12-18T00:00:00+00:00</updated>
     <id>http://quentin.bonnard.eu/blog/2011/12/18/Reverse_Literate_Programming_on_Jekyll-GitHub</id>
     <content type="html"><![CDATA[<p>In this post I show two ways to document a piece of code on <a href="https://github.com/mojombo/jekyll">Jekyll</a>, the static site generator powering <a href="http://pages.github.com/">GitHub Pages</a> (including this blog).</p>
 
@@ -895,7 +1422,7 @@ content read from the file:</p>
   <entry>
     <title type="html"><![CDATA[The answer is 2011. The question can be brute force.]]></title>
     <link href="http://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force/"/>
-    <updated>2011-10-25T00:00:00+02:00</updated>
+    <updated>2011-10-25T00:00:00+00:00</updated>
     <id>http://quentin.bonnard.eu/blog/2011/10/25/The_answer_is_2011_the_question_can_be_brute_force</id>
     <content type="html"><![CDATA[<p>This post describes a brute-force method to find that <code>(1+2)!! + 3!^4 - 5 = 2011</code> and gives an implementation in C++.</p>
 
@@ -1614,7 +2141,7 @@ For the first item of the list, the same idea of counting in a different base is
   <entry>
     <title type="html"><![CDATA[Headless SparkleShare on the host]]></title>
     <link href="http://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host/"/>
-    <updated>2011-07-29T00:00:00+02:00</updated>
+    <updated>2011-07-29T00:00:00+00:00</updated>
     <id>http://quentin.bonnard.eu/blog/2011/07/29/Headless_SparkleShare_on_the_host</id>
     <content type="html"><![CDATA[<p>This post describes how to efficiently synchronize a SparkleShare project with a folder on the host.</p>
 
