@@ -4,7 +4,7 @@
   <title><![CDATA[Quentin Bonnard]]></title>
   <link href="http://quentin.bonnard.eu/atom.xml" rel="self"/>
   <link href="http://quentin.bonnard.eu/"/>
-  <updated>2017-02-12T20:58:45+00:00</updated>
+  <updated>2017-02-21T10:39:34+00:00</updated>
   <id>http://quentin.bonnard.eu/</id>
   <author>
     <name><![CDATA[Quentin Bonnard]]></name>
@@ -14,59 +14,78 @@
 
   
   <entry>
-    <title type="html"><![CDATA[Tweet positive HN posts without coding]]></title>
-    <link href="http://quentin.bonnard.eu/blog/2017/02/10/tweet-positive-HN-posts-without-code/"/>
-    <updated>2017-02-10T00:00:00+00:00</updated>
-    <id>http://quentin.bonnard.eu/blog/2017/02/10/tweet-positive-HN-posts-without-code</id>
-    <content type="html"><![CDATA[<p>This posts reports on a little experiment with <a href="http://nodered.org/">Node-RED</a>, using its visual data flow editor to fetch HN posts, filter those with positive words in the comments, and tweet them on <a href="http://twitter.com/positivehn">@positiveHN</a>.</p>
+    <title type="html"><![CDATA[Codeless sentiment analysis of HackerNews]]></title>
+    <link href="http://quentin.bonnard.eu/blog/2017/02/20/codeless-sentiment-analysis-of-hackernews/"/>
+    <updated>2017-02-20T00:00:00+00:00</updated>
+    <id>http://quentin.bonnard.eu/blog/2017/02/20/codeless-sentiment-analysis-of-hackernews</id>
+    <content type="html"><![CDATA[<p>This posts reports on a experiment with <a href="http://nodered.org/">Node-RED</a> (a project supported by the <a href="https://js.foundation/">JS Foundation</a>), using its visual data flow editor to fetch HN posts, filter those with positive words in the comments, and tweet them on <a href="http://twitter.com/hackergoodnews">@HackerGoodNews</a>.</p>
 
 <h1>The flow</h1>
 
-<p>I recently came across <a href="http://nodered.org/">Node-RED</a> and wondered how good it would be as a tool to automate a few things I find more and more annoying to do manually. A friend of mine challenged me to use it to tweet &ldquo;positive&rdquo; posts from Hacker News (mostly because there was a sentiment analysis node as part of the built-in set of node). Extra points for making it without code (even though there is a <code>function</code> node to write arbitrary javascript to process messages).</p>
+<p>I recently came across <a href="http://nodered.org/">Node-RED</a> and wondered how good it would be as a tool to automate a few things I find more and more annoying to do manually. A friend of mine challenged me to use it to tweet &ldquo;positive&rdquo; posts from Hacker News (mostly because there was a sentiment analysis node as part of the built-in set of nodes). Extra points for making it without code (even though there is a <code>function</code> node to write arbitrary javascript to process messages).</p>
 
 <p>Here is the result:</p>
 
-<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2017/02/10/tweet-positive-hn-flow.png" alt="A Node-RED flow to tweet HackerNews posts with positive words in the comments." /></p>
+<p style="text-align:center;"> <img src="http://quentin.bonnard.eu/images/blog/2017/02/10/codeless-sentiment-analysis-of-hackernews.png" alt="A Node-RED flow to tweet HackerNews posts with positive words in the comments." /></p>
 
 <p>It works as follows:</p>
 
 <ul>
-<li><code>Parse HN's RSS feed</code> creates a new <em>message</em> (Node RED&rsquo;s unit of processing) every time a new article appears in HN&rsquo;s RSS feed.</li>
-<li><code>limit 5 msg/s</code> will make sure that no more that no more than 5 messages per second go through the rest of the flow. HackerNews seems to dislike too frequent requests, as made in the next node.</li>
+<li><code>Parse HN's RSS feed</code> creates a new <em>message</em> (Node-RED&rsquo;s unit of processing) every time a new post appears in HN&rsquo;s RSS feed.</li>
+<li><code>limit 5 msg/s</code> ensures that no more that no more than 5 messages per second go through the rest of the flow. HackerNews seems to dislike too frequent requests, as made in the comment fetching node</li>
+<li><code>delay 1 hour</code> gives some time for the comments to appear</li>
 <li><code>fetch comments</code> requests the comment web page of the post</li>
 <li><code>keep text only</code> extracts the comments from the web page</li>
 <li><code>join</code> merges all the comments into one text</li>
 <li><code>sentiment</code> analyses the text</li>
 <li><code>positive only</code> lets only messages with a positive score through</li>
-<li><code>title &gt; 120 chars ?</code> switches messages depending on whether the title of hte post is longer than 120 characters</li>
+<li><code>title &gt; 120 chars ?</code> switches messages depending on whether the title of the post is longer than 120 characters</li>
 <li><code>truncate title</code> shortens the long title</li>
 <li><code>long title</code> produces a tweet with the shortened title (adding suspension mark) and the url of the post</li>
 <li><code>short title</code> simply produces a tweet with the title and the url of the post</li>
-<li><code>Tweet</code> publishes the tweet on <a href="http://twitter.com/positivehn">@positiveHN</a>.</li>
+<li><code>Tweet</code> publishes the tweet on <a href="http://twitter.com/hackergoodnews">@hackergoodnews</a>.</li>
 </ul>
 
 
-<h1>Persistence</h1>
+<p>The sentiment analysis is very simple : it uses the <a href="http://www2.imm.dtu.dk/pubdb/views/publication_details.php?id=6010">AFINN</a> word list where words or phrases have been manually evaluated between -5 and 5. For example, &ldquo;you&rsquo;re a terrific fascist&rdquo; has a (positive) score of 2 points, because terific is worth <code>4</code>, and fascist <code>-2</code>&hellip; Well, I said it&rsquo;s simple, not perfect (and to be honest, I browsed the list for a while to find this example ;) )</p>
 
-<p>Node-RED is event-based, which makes it not naturally persistence-friendly. In this example, I tried to keep track of which (positive) posts had already been tweeted, in order to avoid duplicate on Twitter. Turns out, Twitter already reject duplicates, but before I realized that, I had found two hacks to tilt at that windmill.</p>
+<p>As a more honest example, here are the 5 most negative posts of last week-end:</p>
 
-<p>The first one was a really dirty hack, makeing use of the fact that an exception was thrown when trying to open an non-existent file, and that a special node was able to catch exceptions. Thus, for every message coming frome the feed parsing node, the url of the post was base64 encoded and used as a filename to open. If the open succeeded, nothing more happened, but if it failed, it meant that the url hadn&rsquo;t been handled yet. The exception catching node would then initiate another flow that would tweet and save an empty file with the base64 encoded url as name. I did warn it was dirty.</p>
+<ol>
+<li><a href="https://www.susanjfowler.com/blog/2017/2/19/reflecting-on-one-very-strange-year-at-uber">Reflecting on One Very, Very Strange Year at Uber</a> (score: -117)</li>
+<li><a href="https://www.nytimes.com/2017/02/19/business/uber-sexual-harassment-investigation.html">Uber Investigating Sexual Harassment Claims by Ex-Employee</a> (score: -77)</li>
+<li><a href="http://www.cringely.com/2017/02/16/no-fracking-way-fukishima-daiichi-worse-ever/">Fukishima is Worse than Ever</a> (score: -60)</li>
+<li><a href="https://www.theguardian.com/technology/2017/feb/20/uber-urgent-investigation-sexual-harassment-claims-susan-fowler">Uber launches &lsquo;urgent investigation&rsquo; into sexual harassment claims</a> (score :-59)</li>
+<li><a href="https://www.nytimes.com/2017/02/15/magazine/the-age-of-rudeness.html">The Age of Rudeness</a> (score: -48)</li>
+</ol>
 
-<p>A slightly-less-hacky-but-still-not-ideal working alternative was to store the urls in a file. The flow would read the file for each message, move its content somewhere in the message, and check whether the url was in the content. If so, it meant that the url had already been processed, otherwhise, the flow would go one by tweeting the url and saving it into the file. I&rsquo;m not sure how parallel read and write are handled&hellip; so using a database would sound like a better idea. But again, all this was unnessary, since Twitter already does (a better) job. Yay!</p>
 
-<h1>Shortcomings</h1>
+<p>And here are the 5 most positive posts:</p>
 
-<p>A better use of the persistence would be to reprocess the list of posts until they reach a positive score or disappear from the homepage. As it is, the sentiment analysis will be performed as soon as a post lands in the stream, i.e. as soon as it reaches the homepage. If not enough comments have been written by then, or too few are positive, the url will never be tweeted, even if the comments become positive afterwards.</p>
+<ol>
+<li><a href="https://news.distrokid.com/what-ive-been-up-to-for-the-past-4-years-ef06ab9c5cd6#.pbxjucbsm">I started a one-man biz that&rsquo;s beating VC-backed startups</a> (score: 615)</li>
+<li><a href="https://news.ycombinator.com/item?id=13668870">Ask HN: Non-technical readers of HN, why are you here?</a> (score: 273)</li>
+<li><a href="https://reactos.org/project-news/reactos-044-released">ReactOS 0.4.4 Released</a> (score: 231)</li>
+<li><a href="http://cityobservatory.org/lets-not-demonize-driving/">Let’s not demonize driving, just stop subsidizing it</a> (score: 175)</li>
+<li><a href="https://blog.mozilla.org/addons/2017/02/16/the-road-to-firefox-57-compatibility-milestones/">Firefox 57 as the first release where only WebExtensions will be supported</a> (score: 127)</li>
+</ol>
 
-<p>Another issue that could be addressed by keeping track of which url has been processed is linked to the fact that the feed parsing node forgets which urls have already been sent through the pipeline between restarts of the server. Again, it is not a problem in this case because Twitter will duplicate updates, but it would be for example if we send an email instead of a tweet.</p>
+
+<h1>Conclusion</h1>
+
+<p>Node-RED makes it really easy to build a tweeting bot that ignores sexual harassment and nuclear disasters without even coding (of course, that relies on a sane community commenting the news).</p>
+
+<p>The only shortcoming I found concerns the feed parser which does not remember what was already processed. For example, if I were to restart my Node-RED instance, all the positive posts of the home page would be sent to twitter. That&rsquo;s not a problem since Twitter detects and rejects duplicate statuses, but it would be more annoying if the messages were sent by email.</p>
+
+<p>However, another (and maybe the biggest) strength of Node-RED is how easy it is to extend it by writing new nodes (with code, this time). That brings two solutions to my &ldquo;problem&rdquo;: either use one of the many existing nodes to hack some persistence into the feed parser (e.g. with a database node or a file node), or write my own feed parser. Good times ahead ! :)</p>
 
 <h1>Comments</h1>
 
-<p>Let&rsquo;s see if <a href="">the discussion of this post on HN</a> will be positive ;)</p>
+<p>Let&rsquo;s see if <a href="">the discussion of this article on HN</a> will be positive ;)</p>
 
 <h1>Appendix</h1>
 
-<p>Here is the flow to import into Node RED, if you want to tinker with it:</p>
+<p>Here is the flow to import into Node-RED, if you want to tinker with it:</p>
 
 <figure class='code'><div class="highlight"><table><tr><td class="gutter"><pre class="line-numbers"><span class='line-number'>1</span>
 <span class='line-number'>2</span>
@@ -302,6 +321,29 @@
 <span class='line-number'>232</span>
 <span class='line-number'>233</span>
 <span class='line-number'>234</span>
+<span class='line-number'>235</span>
+<span class='line-number'>236</span>
+<span class='line-number'>237</span>
+<span class='line-number'>238</span>
+<span class='line-number'>239</span>
+<span class='line-number'>240</span>
+<span class='line-number'>241</span>
+<span class='line-number'>242</span>
+<span class='line-number'>243</span>
+<span class='line-number'>244</span>
+<span class='line-number'>245</span>
+<span class='line-number'>246</span>
+<span class='line-number'>247</span>
+<span class='line-number'>248</span>
+<span class='line-number'>249</span>
+<span class='line-number'>250</span>
+<span class='line-number'>251</span>
+<span class='line-number'>252</span>
+<span class='line-number'>253</span>
+<span class='line-number'>254</span>
+<span class='line-number'>255</span>
+<span class='line-number'>256</span>
+<span class='line-number'>257</span>
 </pre></td><td class='code'><pre><code class=''><span class='line'>[
 </span><span class='line'>    {
 </span><span class='line'>        "id": "f24d4456.2acf58",
@@ -310,8 +352,8 @@
 </span><span class='line'>        "name": "Parse HN's RSS feed",
 </span><span class='line'>        "url": "https://news.ycombinator.com/rss",
 </span><span class='line'>        "interval": "1",
-</span><span class='line'>        "x": 347,
-</span><span class='line'>        "y": 238,
+</span><span class='line'>        "x": 346,
+</span><span class='line'>        "y": 222,
 </span><span class='line'>        "wires": [
 </span><span class='line'>            [
 </span><span class='line'>                "bbbfef8e.5229b8"
@@ -327,8 +369,8 @@
 </span><span class='line'>        "ret": "txt",
 </span><span class='line'>        "url": "}",
 </span><span class='line'>        "tls": "",
-</span><span class='line'>        "x": 493.875,
-</span><span class='line'>        "y": 330.5,
+</span><span class='line'>        "x": 628.875,
+</span><span class='line'>        "y": 314.5,
 </span><span class='line'>        "wires": [
 </span><span class='line'>            [
 </span><span class='line'>                "8f2f189a.7c4f38"
@@ -408,16 +450,6 @@
 </span><span class='line'>                "a6426eab.664338"
 </span><span class='line'>            ]
 </span><span class='line'>        ]
-</span><span class='line'>    },
-</span><span class='line'>    {
-</span><span class='line'>        "id": "4c2dc9df.bb824",
-</span><span class='line'>        "type": "twitter out",
-</span><span class='line'>        "z": "47e2e162.19bab8",
-</span><span class='line'>        "twitter": "",
-</span><span class='line'>        "name": "Tweet",
-</span><span class='line'>        "x": 846.5,
-</span><span class='line'>        "y": 628,
-</span><span class='line'>        "wires": []
 </span><span class='line'>    },
 </span><span class='line'>    {
 </span><span class='line'>        "id": "a62ee7eb.16d048",
@@ -527,13 +559,46 @@
 </span><span class='line'>        "randomLast": "500",
 </span><span class='line'>        "randomUnits": "milliseconds",
 </span><span class='line'>        "drop": false,
-</span><span class='line'>        "x": 315.5,
-</span><span class='line'>        "y": 331,
+</span><span class='line'>        "x": 314.5,
+</span><span class='line'>        "y": 315,
+</span><span class='line'>        "wires": [
+</span><span class='line'>            [
+</span><span class='line'>                "536603f7.dd90c4"
+</span><span class='line'>            ]
+</span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "536603f7.dd90c4",
+</span><span class='line'>        "type": "delay",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "name": "",
+</span><span class='line'>        "pauseType": "delay",
+</span><span class='line'>        "timeout": "1",
+</span><span class='line'>        "timeoutUnits": "hours",
+</span><span class='line'>        "rate": "1",
+</span><span class='line'>        "nbRateUnits": "1",
+</span><span class='line'>        "rateUnits": "second",
+</span><span class='line'>        "randomFirst": "1",
+</span><span class='line'>        "randomLast": "5",
+</span><span class='line'>        "randomUnits": "seconds",
+</span><span class='line'>        "drop": false,
+</span><span class='line'>        "x": 464.5,
+</span><span class='line'>        "y": 315,
 </span><span class='line'>        "wires": [
 </span><span class='line'>            [
 </span><span class='line'>                "194d8318.d5c7ad"
 </span><span class='line'>            ]
 </span><span class='line'>        ]
+</span><span class='line'>    },
+</span><span class='line'>    {
+</span><span class='line'>        "id": "4c2dc9df.bb824",
+</span><span class='line'>        "type": "twitter out",
+</span><span class='line'>        "z": "47e2e162.19bab8",
+</span><span class='line'>        "twitter": "",
+</span><span class='line'>        "name": "Tweet",
+</span><span class='line'>        "x": 846.5,
+</span><span class='line'>        "y": 628,
+</span><span class='line'>        "wires": []
 </span><span class='line'>    }
 </span><span class='line'>]</span></code></pre></td></tr></table></div></figure>
 
